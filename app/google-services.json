@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "103802736720",
+    "firebase_url": "https://sunny-app-4e745.firebaseio.com",
+    "project_id": "sunny-app-4e745",
+    "storage_bucket": "sunny-app-4e745.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:103802736720:android:646f862a0b55df69694155",
+        "android_client_info": {
+          "package_name": "com.example.sunnyapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "103802736720-v0ch8g7ref6oeutmi2bq6qcm38r9j2aq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcOIQkTn9rvFnE3XcWssvPnxhmJv-Qico"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "103802736720-v0ch8g7ref6oeutmi2bq6qcm38r9j2aq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
