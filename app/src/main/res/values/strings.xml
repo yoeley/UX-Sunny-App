@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">SunnyApp</string>
+    <string name="firebase_login">FireBase Login</string>
+    <string name="login_with_google">Login with Google</string>
+    <string name="logout">Logout</string>
+    <string name="title_activity_first_sign_in">FirstSignInActivity</string>
 </resources>
