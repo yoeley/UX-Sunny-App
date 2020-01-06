@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
         <activity
-            android:name=".FirstSignIn"
+            android:name=".FirstSignInActivity"
             android:label="@string/title_activity_first_sign_in"
             android:theme="@style/AppTheme.NoActionBar.NoActionBar"></activity>
         <activity android:name=".MainActivity">

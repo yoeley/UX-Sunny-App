@@ -12,8 +12,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         boolean firstSignIn = true;
+        String s = WeatherDataController.getInstance().getJerusalemWeatherData();
         if(firstSignIn) {
-            Intent firstSignInActivity = new Intent(getBaseContext(), FirstSignIn.class);
+            Intent firstSignInActivity = new Intent(getBaseContext(), FirstSignInActivity.class);
             startActivity(firstSignInActivity);
         }
     }
