@@ -1,5 +1,10 @@
 package com.example.sunnyapp;
 
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -12,6 +17,8 @@ public class WeatherDataController {
     private FirebaseController firebaseController;
     private FirebaseFirestore db;
     private DocumentReference mDocRef;
+    private WeatherData weatherData = null;
+    private final String BASE_PATH = "weather_by_loc/Countries/";
 
     public static WeatherDataController getInstance() {
         return ourInstance;
@@ -23,20 +30,45 @@ public class WeatherDataController {
 
     }
 
-    public String getJerusalemWeatherData(){
-        mDocRef = db.document("weather_by_loc/Countries");
+    public WeatherData getWeatherDataByLocation(String locationPath){
+        mDocRef = db.document(locationPath);
         mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
-                    String dateAndTime = documentSnapshot.getString("date_and_time");
-                    String degrees_celcius = documentSnapshot.getString("degrees_celcius");
-
-                    // TODO do a weatherData object to save info and use Map<String, weatherData> my data = documentSnapshot.getData();
-                    // Or a to object function, look at tutorial - Better use to object.
+                    weatherData = documentSnapshot.toObject(WeatherData.class);
+                    // Call some intent to move screen on success?
+                }
+                else
+                {
+                    Log.d("Firestore fetch error:", "No such path to document.");
                 }
             }
         });
-        return "s";
+        return weatherData;
+    }
+
+    public void saveWeatherDataByLocation(String locationPath, WeatherData weatherData) {
+        if (weatherData != null) {
+            mDocRef = db.document(locationPath);
+            mDocRef.set(weatherData)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.d("Weather data:", "Document has been saved!");
+                            // Call some intent to move screen on success?
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d("Weather data:", "Failure: Document has not been saved!", e);
+                }
+            });
+        }
+    }
+
+    public String weatherDataPathBuilder(String country, String city)
+    {
+        return BASE_PATH + country + "/" + city;
     }
 }
