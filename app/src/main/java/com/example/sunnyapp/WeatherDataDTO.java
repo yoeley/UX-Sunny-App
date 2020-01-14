@@ -5,7 +5,7 @@ import com.google.firebase.Timestamp;
 
 import java.util.Date;
 
-public class WeatherData {
+public class WeatherDataDTO {
 
     // Getting from DB
     private Timestamp timestamp;
@@ -14,9 +14,9 @@ public class WeatherData {
     // Converted from timestamp to Date.
 //    private Date date;
 
-    public WeatherData(){}
+    public WeatherDataDTO(){}
 
-    public WeatherData(int degreesCelcius, Timestamp timestamp){
+    public WeatherDataDTO(int degreesCelcius, Timestamp timestamp){
         this.degreesCelsius = degreesCelcius;
         this.timestamp = timestamp;
     }

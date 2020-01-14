@@ -9,6 +9,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.UploadTask;
 
 public class WeatherDataController {
 
@@ -17,7 +19,7 @@ public class WeatherDataController {
     private FirebaseController firebaseController;
     private FirebaseFirestore db;
     private DocumentReference mDocRef;
-    private WeatherData weatherData = null;
+    private WeatherDataDTO weatherData = null;
     private final String BASE_PATH = "weather_by_loc/Countries/";
 
     public static WeatherDataController getInstance() {
@@ -27,16 +29,15 @@ public class WeatherDataController {
     private WeatherDataController() {
         firebaseController = FirebaseController.getInstance();
         db = firebaseController.db;
-
     }
 
-    public WeatherData getWeatherDataByLocation(String locationPath){
+    public WeatherDataDTO getWeatherDataByLocation(String locationPath){
         mDocRef = db.document(locationPath);
         mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
-                    weatherData = documentSnapshot.toObject(WeatherData.class);
+                    weatherData = documentSnapshot.toObject(WeatherDataDTO.class);
                     // Call some intent to move screen on success?
                 }
                 else
@@ -48,7 +49,7 @@ public class WeatherDataController {
         return weatherData;
     }
 
-    public void saveWeatherDataByLocation(String locationPath, WeatherData weatherData) {
+    public void saveWeatherDataByLocation(String locationPath, WeatherDataDTO weatherData) {
         if (weatherData != null) {
             mDocRef = db.document(locationPath);
             mDocRef.set(weatherData)

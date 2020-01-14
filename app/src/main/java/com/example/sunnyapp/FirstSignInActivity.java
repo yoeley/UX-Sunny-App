@@ -167,10 +167,13 @@ public class FirstSignInActivity extends AppCompatActivity{
         loginText.append(email);
     }
 
-    private void logout(){
-        FirebaseAuth.getInstance().signOut();
-        googleSignInClient.signOut()
-                .addOnCompleteListener(this,
-                        task -> updateUI(null));
+    private void logout() {
+        Intent ImageManagerActivity = new Intent(getBaseContext(), ImageManagerActivity.class);
+        startActivity(ImageManagerActivity);
+
+//        FirebaseAuth.getInstance().signOut();
+//        googleSignInClient.signOut()
+//                .addOnCompleteListener(this,
+//                        task -> updateUI(null));
     }
 }

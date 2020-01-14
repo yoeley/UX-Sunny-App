@@ -13,19 +13,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         boolean firstSignIn = true;
 //        WeatherDataController weatherDataController = WeatherDataController.getInstance();
-//        WeatherData weatherData = weatherDataController.
+//        WeatherDataDTO weatherData = weatherDataController.
 //                getWeatherDataByLocation(weatherDataController.
 //                        weatherDataPathBuilder("Israel", "Jerusalem"));
         // Need to insert data converted from GPS to country + city.
 
 
-        Intent ImageManagerActivity = new Intent(getBaseContext(), ImageManagerActivity.class);
-        startActivity(ImageManagerActivity);
+//        Intent ImageManagerActivity = new Intent(getBaseContext(), ImageManagerActivity.class);
+//        startActivity(ImageManagerActivity);
 
-//        if(firstSignIn) {
-//            Intent firstSignInActivity = new Intent(getBaseContext(), FirstSignInActivity.class);
-//            startActivity(firstSignInActivity);
-//        }
+        if(firstSignIn) {
+            Intent firstSignInActivity = new Intent(getBaseContext(), FirstSignInActivity.class);
+            startActivity(firstSignInActivity);
+        }
 //        String s = WeatherDataController.getInstance().getWeatherDataByLocation();
     }
 
