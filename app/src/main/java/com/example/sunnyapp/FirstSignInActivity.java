@@ -16,17 +16,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.Api;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthCredential;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.squareup.picasso.Picasso;
 
-public class FirstSignIn extends AppCompatActivity{
+public class FirstSignInActivity extends AppCompatActivity{
 
     static final int GOOGLE_SIGN = 123;
     FirebaseAuth mAuth;
@@ -41,29 +39,22 @@ public class FirstSignIn extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.first_sign_in);
 
+        initVariables();
+        initGoogleSignInClient();
+
+        loginButton.setOnClickListener(v -> signInGoogle());
+        logoutButton.setOnClickListener(v -> logout());
+
+        updateUserData();
+    }
+
+    private void initVariables() {
         loginButton = findViewById(R.id.login);
         logoutButton = findViewById(R.id.logout);
         loginText = findViewById(R.id.firebase_text);
         loginImage = findViewById(R.id.firebase_icon);
         progressBar = findViewById(R.id.progress_circular);
-        mAuth = FirebaseAuth.getInstance();
-
-        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions
-                .Builder()
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-
-        googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions);
-
-        loginButton.setOnClickListener(v -> signInGoogle());
-        logoutButton.setOnClickListener(v -> logout());
-
-        if(mAuth.getCurrentUser() != null)
-        {
-            FirebaseUser user = mAuth.getCurrentUser();
-            updateUI(user);
-        }
+        mAuth = FirebaseController.getInstance().mAuth;
     }
 
     void signInGoogle(){
@@ -71,6 +62,24 @@ public class FirstSignIn extends AppCompatActivity{
 
         Intent signInIntent = googleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, GOOGLE_SIGN);
+    }
+
+    private void updateUserData() {
+        if(mAuth.getCurrentUser() != null)
+        {
+            FirebaseUser user = mAuth.getCurrentUser();
+            updateUI(user);
+        }
+    }
+
+    private void initGoogleSignInClient() {
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions
+                .Builder()
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions);
     }
 
     @Override
@@ -122,26 +131,49 @@ public class FirstSignIn extends AppCompatActivity{
             String email = user.getEmail();
             String photo = String.valueOf(user.getPhotoUrl());
 
-            loginText.append("Info :\n");
-            loginText.append(name + "\n");
-            loginText.append(email);
+            setLoginText(name, email);
+            if (photo.equals("null")){
+                Picasso.get().load(R.drawable.ic_firebase_logo).into(loginImage);
+            }
+            else {
+                Picasso.get().load(photo).into(loginImage);
+            }
+            toggleLoginButtons(true);
+        }
+        else {
+            loginText.setText(getString(R.string.sunny_login));
+            Picasso.get().load(R.drawable.ic_firebase_logo).into(loginImage);
+            toggleLoginButtons(false);
+        }
+    }
 
-            Picasso.get().load(photo).into(loginImage);
+    private void toggleLoginButtons(boolean loginOn) {
+        if(loginOn)
+        {
             loginButton.setVisibility(View.INVISIBLE);
             logoutButton.setVisibility(View.VISIBLE);
         }
         else {
-            loginText.setText(getString(R.string.firebase_login));
-            Picasso.get().load(R.drawable.ic_firebase_logo).into(loginImage);
             loginButton.setVisibility(View.VISIBLE);
             logoutButton.setVisibility(View.INVISIBLE);
         }
     }
 
-    private void logout(){
-        FirebaseAuth.getInstance().signOut();
-        googleSignInClient.signOut()
-                .addOnCompleteListener(this,
-                        task -> updateUI(null));
+    private void setLoginText(String name, String email) {
+        loginText.append(" Info :\n");
+        if(name != null){
+            loginText.append(name + "\n");
+        }
+        loginText.append(email);
+    }
+
+    private void logout() {
+        Intent ImageManagerActivity = new Intent(getBaseContext(), ImageManagerActivity.class);
+        startActivity(ImageManagerActivity);
+
+//        FirebaseAuth.getInstance().signOut();
+//        googleSignInClient.signOut()
+//                .addOnCompleteListener(this,
+//                        task -> updateUI(null));
     }
 }

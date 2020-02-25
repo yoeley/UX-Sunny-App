@@ -21,7 +21,7 @@
         android:id="@+id/firebase_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/firebase_login"
+        android:text="@string/sunny_login"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         android:layout_marginTop="20dp"
