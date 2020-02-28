@@ -22,10 +22,19 @@ public class MainActivity extends AppCompatActivity {
 //        Intent ImageManagerActivity = new Intent(getBaseContext(), ImageManagerActivity.class);
 //        startActivity(ImageManagerActivity);
 
+
+        /* to activate Yoel's sign-in sequence upon start, uncomment this section
         if(firstSignIn) {
             Intent firstSignInActivity = new Intent(getBaseContext(), FirstSignInActivity.class);
             startActivity(firstSignInActivity);
         }
+         */
+
+        // this section goes to Aviad's weather prediction page without log in or sign in
+        Intent sunnyActiviy = new Intent(getBaseContext(), LoadWeatherActivity.class);
+        startActivity(sunnyActiviy);
+
+
 //        String s = WeatherDataController.getInstance().getWeatherDataByLocation();
     }
 
