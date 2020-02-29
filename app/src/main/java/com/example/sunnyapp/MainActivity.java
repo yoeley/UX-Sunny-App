@@ -31,8 +31,8 @@ public class MainActivity extends AppCompatActivity {
          */
 
         // this section goes to Aviad's weather prediction page without log in or sign in
-        Intent sunnyActiviy = new Intent(getBaseContext(), LoadWeatherActivity.class);
-        startActivity(sunnyActiviy);
+        Intent loadWeatherActivity = new Intent(getBaseContext(), LoadWeatherActivity.class);
+        startActivity(loadWeatherActivity);
 
 
 //        String s = WeatherDataController.getInstance().getWeatherDataByLocation();

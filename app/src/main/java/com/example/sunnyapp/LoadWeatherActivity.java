@@ -29,9 +29,9 @@ public class LoadWeatherActivity extends AppCompatActivity {
     private int PERMISSION_ID = 44;
     private FusedLocationProviderClient fusedLocationClient;
     private WeatherLoader weatherLoader;
-    private TextView location_text;
-    private TextView location_key;
+    private TextView logo;
     private Location location;
+    private LoadWeatherActivity loadWeatherActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,9 +39,9 @@ public class LoadWeatherActivity extends AppCompatActivity {
         setContentView(R.layout.activity_load_weather);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        location_text = findViewById(R.id.location_text);
-        location_key = findViewById(R.id.location_key);
+        logo = findViewById(R.id.logo);
         weatherLoader = WeatherLoader.getInstance();
+        loadWeatherActivity = this;
 
         getLastLocation();
     }
@@ -59,8 +59,8 @@ public class LoadWeatherActivity extends AppCompatActivity {
                                     requestNewLocationData();
                                 } else {
                                     System.out.println(location.getLatitude()+""+location.getLongitude()+"");
-                                    location_text.setText(location.getLatitude()+""+location.getLongitude()+"\n");
                                     weatherLoader.setLocation(location);
+                                    weatherLoader.setLoadWeatherActivity(loadWeatherActivity);
                                     weatherLoader.getWeather();
                                 }
                             }
@@ -135,11 +135,16 @@ public class LoadWeatherActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onResume(){
-        super.onResume();
-        if (checkPermissions()) {
-            getLastLocation();
-        }
+//    @Override
+//    public void onResume(){
+//        super.onResume();
+//        if (checkPermissions()) {
+//            getLastLocation();
+//        }
+//    }
+
+    public void goToDisplayWeatherActivity() {
+        Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
+        startActivity(displayWeatherActivity);
     }
 }
