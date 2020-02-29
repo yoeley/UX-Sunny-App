@@ -33,11 +33,30 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     protected Typeface tfRegular;
     protected Typeface tfLight;
 
+    private WeatherLoader weatherLoader;
+    private Forecast forecast;
+    private SunriseSunset sunriseSunset;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_weather);
 
+        setWeather();
+        setDisplay();
+    }
+
+    private void setWeather() {
+        weatherLoader = WeatherLoader.getInstance();
+        forecast = weatherLoader.getForecast();
+        sunriseSunset = weatherLoader.getSunriseSunset();
+    }
+
+    private void setDisplay() {
+        setDisplayChart();
+    }
+
+    private void setDisplayChart() {
         setChart();
         setXAxis();
         setYAxis();
@@ -112,6 +131,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
 
 
     private ArrayList<Entry> createData() {
+
+        Date dateTime = new Date(forecast.getDateTime());
+        //int startHour =
+
         int sunrise_time = 5;
         int sunset_time = 18;
         // now in hours
