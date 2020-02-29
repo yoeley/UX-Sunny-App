@@ -12,6 +12,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 
 public class WeatherLoader {
 
@@ -24,6 +26,10 @@ public class WeatherLoader {
     private Location location = null;
 
     private static WeatherLoader weatherLoader = null;
+    private LoadWeatherActivity loadWeatherActivity;
+
+    private Forecast forecast;
+    private SunriseSunset sunriseSunset;
 
     private WeatherLoader() {
     }
@@ -49,12 +55,24 @@ public class WeatherLoader {
         new getWeatherTask().execute();
     }
 
+    public void setLoadWeatherActivity(LoadWeatherActivity loadWeatherActivity) {
+        this.loadWeatherActivity = loadWeatherActivity;
+    }
+
     public Location getLocation() {
         return location;
     }
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    public Forecast getForecast() {
+        return forecast;
+    }
+
+    public SunriseSunset getSunriseSunset() {
+        return sunriseSunset;
     }
 
     private class getWeatherTask extends AsyncTask<Integer, Integer, Integer> {
@@ -168,9 +186,14 @@ public class WeatherLoader {
             OkHttpClient client = new OkHttpClient();
 
             String locationKey = obtainLocationKey(client);
-            JSONArray weatherResultJSON = obtainWeatherForecastJSON(client, locationKey);
+            JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
             JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
             JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
+
+            Date currDateTime = Calendar.getInstance().getTime();
+
+            forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
+            sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
 
             return null;
         }
@@ -179,7 +202,7 @@ public class WeatherLoader {
         }
 
         protected void onPostExecute(Integer result) {
-
+            //TODO: call loadWeatherActivity's method for going to display activity
         }
     }
 }
