@@ -23,6 +23,7 @@ import com.github.mikephil.charting.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -75,8 +76,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.setPinchZoom(false);
         chart.setDrawGridBackground(false);
         chart.setHighlightPerDragEnabled(true);
-        chart.setViewPortOffsets(25f, 5f, 25f, 50f);
-
+        chart.setViewPortOffsets(0f, 0f, 0f, 100f);
         chart.getDescription().setEnabled(false);
         chart.setDrawGridBackground(false);
         chart.setMaxHighlightDistance(100);
@@ -95,17 +95,12 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         x.setTextColor(Color.BLACK);
         x.setCenterAxisLabels(true);
         x.setGranularity(0.25f); // one hour
-        x.setAxisMinimum(5);
-        x.setAxisMaximum(22);
+
+        // TODO: fix it so the first value is not written on the x axis (the first value is the current time, the only time that is not a round hour)
         x.setValueFormatter(new ValueFormatter() {
-
-            private final SimpleDateFormat mFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
-
             @Override
             public String getFormattedValue(float value) {
-
-                long millis = TimeUnit.HOURS.toMillis((long) value);
-                return mFormat.format(new Date(millis).getTime());
+                return String.valueOf((int)value % 24) + ":00";
             }
         });
     }
@@ -114,8 +109,8 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         YAxis y = chart.getAxisLeft();
         y.setTypeface(tfLight);
         y.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        y.setAxisMinimum(-0.5f);
-        y.setAxisMaximum(5.5f);
+        //y.setAxisMinimum(-0.5f);
+        //y.setAxisMaximum(5.5f);
         y.setGranularityEnabled(true);
         y.setGranularity(0.2f);
         y.setDrawGridLines(false);
@@ -132,23 +127,24 @@ public class DisplayWeatherActivity extends AppCompatActivity {
 
     private ArrayList<Entry> createData() {
 
-        Date dateTime = new Date(forecast.getDateTime());
-        //int startHour =
+        Date dateTime = DateStringConverter.stringToDate(forecast.getDateTime());
+        Calendar calender = Calendar.getInstance();
+        calender.setTime(dateTime);
 
-        int sunrise_time = 5;
-        int sunset_time = 18;
-        // now in hours
-        long sunrise = TimeUnit.HOURS.toHours(sunrise_time);
-        long now = TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis());
-        long sunset = TimeUnit.HOURS.toHours(sunset_time);
+        int startHour = calender.get(Calendar.HOUR);
+        int startMinute = calender.get(Calendar.MINUTE);
+
+        float startTime = startHour + startMinute / (float)60;
 
         ArrayList<Entry> values = new ArrayList<>();
+        ArrayList<Double> forcast12Hours = forecast.getForeCast();
+
+        values.add(new Entry(startTime, forecast.getCurrCondition().floatValue()));
 
         // update values array
-        for (float x = sunrise; x < sunset; x++) {
-
-            Log.d("x value:", Float.toString(x));
-            values.add(new Entry(x, x % 6)); // add one entry per hour
+        for (int hour = 0; hour < 12; ++hour) {
+            Log.d("x value:", Float.toString(hour));
+            values.add(new Entry(startHour + 1 + hour, forcast12Hours.get(hour).floatValue())); // add one entry per hour
         }
         return values;
     }

@@ -22,7 +22,7 @@ public class ForecastGenerator {
         forecast.setLatitude(location.getLatitude());
         forecast.setLongitude(location.getLongitude());
         forecast.setLocationKey(locationKey);
-        forecast.setDateTime(currDateTime.toString());
+        forecast.setDateTime(DateStringConverter.dateToString(currDateTime));
 
         forecast.setCurrCondition(currConditionSunnyFactor(currConditionsJSON));
         forecast.setForeCast(forecastSunnyFactor(forecastJSON));

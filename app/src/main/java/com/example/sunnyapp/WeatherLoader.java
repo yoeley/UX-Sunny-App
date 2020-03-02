@@ -51,7 +51,7 @@ public class WeatherLoader {
         return weatherLoader;
     }
 
-    public void getWeather() {
+    public void loadWeather() {
         new getWeatherTask().execute();
     }
 

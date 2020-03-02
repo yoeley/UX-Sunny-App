@@ -2,6 +2,9 @@ package com.example.sunnyapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.location.LocationListener;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -12,6 +15,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.widget.TextView;
@@ -24,6 +28,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.util.Calendar;
+
 public class LoadWeatherActivity extends AppCompatActivity {
 
     private int PERMISSION_ID = 44;
@@ -32,6 +38,9 @@ public class LoadWeatherActivity extends AppCompatActivity {
     private TextView logo;
     private Location location;
     private LoadWeatherActivity loadWeatherActivity;
+    private ExternalGetLastLocationHandler externalGetLastLocationHandler;
+    private LocationListenerGPS locationListenerGPS;
+    private Boolean needToLoadWeather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +50,21 @@ public class LoadWeatherActivity extends AppCompatActivity {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         logo = findViewById(R.id.logo);
         weatherLoader = WeatherLoader.getInstance();
+        locationListenerGPS = new LocationListenerGPS();
+        needToLoadWeather = true;
         loadWeatherActivity = this;
 
+        getLastLocation();
+
+        setScheduler();
+    }
+
+    public void externalGetLastLocation() {
         getLastLocation();
     }
 
     @SuppressLint("MissingPermission")
-    private void getLastLocation(){
+    private void getLastLocation() {
         if (checkPermissions()) {
             if (isLocationEnabled()) {
                 fusedLocationClient.getLastLocation().addOnCompleteListener(
@@ -58,10 +75,11 @@ public class LoadWeatherActivity extends AppCompatActivity {
                                 if (location == null) {
                                     requestNewLocationData();
                                 } else {
-                                    System.out.println(location.getLatitude()+""+location.getLongitude()+"");
-                                    weatherLoader.setLocation(location);
-                                    weatherLoader.setLoadWeatherActivity(loadWeatherActivity);
-                                    weatherLoader.getWeather();
+                                    checkIsOutdoors();
+                                    if (needToLoadWeather) {
+                                        needToLoadWeather = false;
+                                        loadWeather();
+                                    }
                                 }
                             }
                         }
@@ -76,9 +94,61 @@ public class LoadWeatherActivity extends AppCompatActivity {
         }
     }
 
+    private void checkIsOutdoors() {
+        // if last fix on location happend more then 5 seconds ago, user is inside.
+        // using LocationManager for this one instead of fusedLocationClient because
+        // fusedLocationClient seems to give the time of a fixed location from any source,
+        // while LocationManager gives the reqired time of the fix - that of the GPS fix
+        LocationManager locationManager = (LocationManager) getBaseContext().getSystemService(LOCATION_SERVICE);
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 200, 0, locationListenerGPS);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                Location currLocation = null;
+                try {
+                    currLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                } catch (SecurityException e) {
+                    e.printStackTrace();
+                }
+
+                if (Calendar.getInstance().getTime().getTime() - currLocation.getTime() > 5000) {
+                    uploadIsOutdoors(false);
+                } else {
+                    uploadIsOutdoors(true);
+                }
+                locationManager.removeUpdates(locationListenerGPS);
+            }
+        }, 10000);
+    }
+
+    private void loadWeather() {
+        weatherLoader.setLocation(location);
+        weatherLoader.setLoadWeatherActivity(loadWeatherActivity);
+        weatherLoader.loadWeather();
+    }
+
+    /**
+     * this method will upload to the firebase server information about if the user is outside or
+     * not. it's not yet implemented
+     *
+     * @param isOutside
+     */
+    private void uploadIsOutdoors(Boolean isOutside) {
+//        // this code was used, and may still be used, for testing the checkIsOutdoors method
+//        if (isOutside) {
+//            logo.setText("Outside");
+//        } else {
+//            logo.setText("Inside");
+//        }
+    }
 
     @SuppressLint("MissingPermission")
-    private void requestNewLocationData(){
+    private void requestNewLocationData() {
 
         LocationRequest mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -98,7 +168,7 @@ public class LoadWeatherActivity extends AppCompatActivity {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             Location location = locationResult.getLastLocation();
-            System.out.println(location.getLatitude()+""+location.getLongitude()+"");
+            System.out.println(location.getLatitude() + "" + location.getLongitude() + "");
         }
     };
 
@@ -143,8 +213,44 @@ public class LoadWeatherActivity extends AppCompatActivity {
 //        }
 //    }
 
+    private void setScheduler() {
+        externalGetLastLocationHandler = ExternalGetLastLocationHandler.getInstance();
+        externalGetLastLocationHandler.setLoadWeatherActivity(this);
+
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, LoadingScheduler.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(), 600000, pendingIntent);
+    }
+
+    /**
+     * this function will cancel the scheduler that schedules reload of the weather and check if the
+     * user is outside every so often. its not neede or called right now, but i thought it's best if
+     * it's here.
+     */
+    private void cancelScheduler() {
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, LoadingScheduler.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmManager.cancel(pendingIntent);
+    }
+
     public void goToDisplayWeatherActivity() {
         Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
         startActivity(displayWeatherActivity);
+    }
+
+    public class LocationListenerGPS implements LocationListener {
+        @Override
+        public void onLocationChanged(Location location) {}
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+        @Override
+        public void onProviderEnabled(String provider) {}
+
+        @Override
+        public void onProviderDisabled(String provider) {}
     }
 }
