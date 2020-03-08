@@ -232,7 +232,7 @@ public class WeatherLoader {
     }
 
     // Added functions, might be else where.
-    private boolean isDataUpdated(long unixTimestamp){
+    private boolean isDataUpdated(long savedUnixTimestamp){
         Calendar cal = Calendar.getInstance();
         TimeZone timeZone =  cal.getTimeZone();
         Date cals =    Calendar.getInstance(TimeZone.getDefault()).getTime();
@@ -240,7 +240,7 @@ public class WeatherLoader {
         milliseconds = milliseconds + timeZone.getOffset(milliseconds);
         long currentUnixTimeStamp = milliseconds / 1000L;
 
-        return unixTimestamp - currentUnixTimeStamp <  3600; // true if < 1 Hour
+        return savedUnixTimestamp - currentUnixTimeStamp <  3600; // true if < 1 Hour
     }
 
     private boolean isLocationProximate(Location savedDocation){
