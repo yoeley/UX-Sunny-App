@@ -30,6 +30,12 @@ public class SunriseSunsetGenerator {
         return sunriseSunset;
     }
 
+    public static SunriseSunset buildSunTime(SunriseSunsetDTO sunriseSunsetDTO)
+    {
+        return new SunriseSunset();
+        // Need to implement Talk with aviad
+    }
+
     public static String extractSunParamFromJSON(JSONObject daily5DaysJSON, String param) {
         try {
             return daily5DaysJSON.getJSONArray("DailyForecasts").getJSONObject(0).getJSONObject("Sun").getString(param);
