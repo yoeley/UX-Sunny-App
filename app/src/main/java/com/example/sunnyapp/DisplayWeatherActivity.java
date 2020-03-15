@@ -3,12 +3,17 @@ package com.example.sunnyapp;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -22,18 +27,18 @@ import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.Utils;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 public class DisplayWeatherActivity extends AppCompatActivity {
 
     private LineChart chart;
     protected Typeface tfRegular;
     protected Typeface tfLight;
+
+    private ImageButton notificationButton;
+    private Boolean isNotificationEnabled;
 
     private WeatherLoader weatherLoader;
     private Forecast forecast;
@@ -45,6 +50,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         setContentView(R.layout.activity_display_weather);
 
         setWeather();
+        setNotification();
         setDisplay();
     }
 
@@ -200,6 +206,65 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.getLegend().setEnabled(false);
         chart.setVisibleXRangeMaximum(8);
         chart.invalidate();
+    }
+
+    private void setNotificationButton() {
+        notificationButton = findViewById(R.id.notification_button);
+
+        if (isNotificationEnabled) {
+            notificationButton.setImageResource(R.drawable.bell);
+        }
+        else {
+            notificationButton.setImageResource(R.drawable.bell_silent);
+        }
+    }
+
+    public void enableDisableNotification(View view) {
+        if (isNotificationEnabled) {
+            FileManager.writeToFile("No", "shouldSetNotification.txt", this);
+            isNotificationEnabled = false;
+        }
+        else {
+            FileManager.writeToFile("Yes", "shouldSetNotification.txt", this);
+            isNotificationEnabled = true;
+        }
+        setNotificationButton();
+    }
+
+    private void setPickWeatherNotificationScheduler(long pickWeatherTimeMillis) {
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, PickWeatherNotificationScheduler.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, pickWeatherTimeMillis, pendingIntent);
+    }
+
+    private void cancelPickWeatherNotificationScheduler() {
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, PickWeatherNotificationScheduler.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmManager.cancel(pendingIntent);
+    }
+
+    private Boolean checkNotificationsEnabled() {
+        String shouldSetNotification = FileManager.readFromFile(getApplicationContext(), "shouldSetNotification.txt");
+        if (shouldSetNotification.equals("Yes") || shouldSetNotification.equals("")) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private void setNotification() {
+
+        cancelPickWeatherNotificationScheduler();
+
+        isNotificationEnabled = checkNotificationsEnabled();
+        if (isNotificationEnabled) {
+            long pickWeatherTimeMillis = weatherLoader.getPickWeatherTimeMillis();
+            setPickWeatherNotificationScheduler(pickWeatherTimeMillis);
+        }
+        setNotificationButton();
     }
 
     @Override

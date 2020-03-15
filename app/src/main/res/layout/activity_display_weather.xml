@@ -14,10 +14,23 @@
         android:gravity="center"
         android:text="Put weather icon here"
         android:textSize="40sp"
-        app:layout_constraintBottom_toTopOf="@+id/chart"
+        app:layout_constraintBottom_toTopOf="@+id/notification_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/notification_button"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:scaleType="fitXY"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/display"
+        app:layout_constraintBottom_toTopOf="@+id/chart"
+        app:srcCompat="@drawable/bell"
+        android:onClick="enableDisableNotification"
+        />
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/chart"
@@ -26,7 +39,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/display"
+        app:layout_constraintTop_toBottomOf="@+id/notification_button"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
