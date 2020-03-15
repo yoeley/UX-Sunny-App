@@ -20,12 +20,12 @@ public class WeatherDataController {
     private FirebaseController firebaseController;
     private FirebaseFirestore db;
     private DocumentReference mDocRef;
-    private WeatherDataDTO weatherDataDTO = null;
-    private SunriseSunsetDTO sunriseSunsetDTO = null;
+    private Forecast forecast = null;
+    private SunriseSunset sunriseSunset = null;
     private final String BASE_PATH = "weather_by_loc/Countries/";
     private final String DATA_TYPE_PATH = "data_type/";
-    private final String WEATHER_PATH = "weather_data";
-    private final String SUNRISE_SUNSET_PATH = "sun_time_data";
+    private final String FORECAST_PATH = "forecast_data";
+    private final String SUNTIME_PATH = "sun_time_data";
 
     public static WeatherDataController getInstance() {
         return ourInstance;
@@ -36,45 +36,46 @@ public class WeatherDataController {
         db = firebaseController.db;
     }
 
-    public FullWeatherData getWeatherDataByLocation(Context context, String country, String city) {
-        String locationPath = weatherDataPathBuilder(country, city);
+    public Forecast getForecastDataByLocation(Context context, String country, String city) {
+        String locationPath = forecastDataPathBuilder(country, city);
         mDocRef = db.document(locationPath);
         mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if (documentSnapshot.exists()) {
-                    weatherDataDTO = documentSnapshot.toObject(WeatherDataDTO.class);
+                    forecast = documentSnapshot.toObject(Forecast.class);
                     // Call some intent to move screen on success?
-                    Toast.makeText(context, "Weather data has been imported",
+                    Toast.makeText(context, "Forecast data has been imported",
                             Toast.LENGTH_LONG).show();
-                    Log.d("Weather data:", "Document has been imported!");
-                    Toast.makeText(context, String.valueOf(weatherDataDTO.getDegreesCelsius())
-                                    + "Celsius",
+                    Log.d("Forecast data:", "Document has been imported!");
+                    Toast.makeText(context, forecast.getCurrCondition()
+                                    + " - Current condition",
                             Toast.LENGTH_LONG).show();
                 } else {
                     Log.d("Firestore fetch error:", "No such path to document.");
+                    Toast.makeText(context, "This path does not exist in the DB.",
+                            Toast.LENGTH_LONG).show();
                 }
             }
         });
-        if(weatherDataDTO != null) {
-            return new FullWeatherData(country, city, weatherDataDTO.getDegreesCelsius(),
-                    weatherDataDTO.getTimestamp());
+        if(forecast != null) {
+            return forecast;
         }
         else return null;
     }
 
-    public void saveWeatherDataByLocation(Context context, FullWeatherData fullWeatherData) {
-        if (fullWeatherData != null) {
-            String locationPath = weatherDataPathBuilder(fullWeatherData.getCountry(),
-                    fullWeatherData.getCity());
+    public void saveForecastDataByLocation(Context context, Forecast forecast,
+                                           String country, String city) {
+        if (forecast != null) {
+            String locationPath = forecastDataPathBuilder(country, city);
             mDocRef = db.document(locationPath);
-            mDocRef.set(getWeatherDTO(fullWeatherData), SetOptions.merge())
+            mDocRef.set(forecast, SetOptions.merge())
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            Log.d("Weather data:", "Document has been saved!");
+                            Log.d("Forecast data:", "Document has been saved!");
                             // Call some intent to move screen on success?
-                            Toast.makeText(context, "Weather data has been uploaded to DB",
+                            Toast.makeText(context, "Forecast data has been uploaded to DB",
                                     Toast.LENGTH_LONG).show();
                         }
                     }).addOnFailureListener(new OnFailureListener() {
@@ -84,28 +85,37 @@ public class WeatherDataController {
                 }
             });
         }
+        else {
+            Log.d("Forecast data:", "Failure: Document has not been saved! - " +
+                    "received null data.");
+            Toast.makeText(context, "Forecast data ERROR, is null, not uploaded to DB",
+                    Toast.LENGTH_LONG).show();
+
+        }
     }
 
 
     public SunriseSunset getSunTimesDataByLocation(Context context, String country, String city) {
-        String locationPath = weatherDataPathBuilder(country, city);
+        String locationPath = sunTimeDataPathBuilder(country, city);
         mDocRef = db.document(locationPath);
         mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if (documentSnapshot.exists()) {
-                    sunriseSunsetDTO = documentSnapshot.toObject(SunriseSunsetDTO.class);
+                    sunriseSunset = documentSnapshot.toObject(SunriseSunset.class);
                     // Call some intent to move screen on success?
-                    Toast.makeText(context, "Sunrise sunset Weather data has been imported",
+                    Toast.makeText(context, "Sunrise sunset data has been imported",
                             Toast.LENGTH_LONG).show();
                     Log.d("Weather data:", "Sunrise sunset Document has been imported!");
                 } else {
                     Log.d("Firestore fetch error:", "No such path to document.");
+                    Toast.makeText(context, "Sunrise sunset data has fetching failed ",
+                            Toast.LENGTH_LONG).show();
                 }
             }
         });
-        if(sunriseSunsetDTO != null) {
-            return SunriseSunsetGenerator.buildSunTime(sunriseSunsetDTO);
+        if(sunriseSunset != null) {
+            return sunriseSunset;
         }
         else return null;
     }
@@ -113,14 +123,14 @@ public class WeatherDataController {
     public void saveSunTimesDataByLocation(Context context, SunriseSunset sunriseSunset,
                                            String country, String city) {
         if (sunriseSunset != null) {
-            String locationPath = weatherDataPathBuilder(country, city);
+            String locationPath = sunTimeDataPathBuilder(country, city);
 
             mDocRef = db.document(locationPath);
-            mDocRef.set(getSunTimeDTO(sunriseSunset), SetOptions.merge())
+            mDocRef.set(sunriseSunset, SetOptions.merge())
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            Log.d("Weather data:", "Sunrise & set has been saved!");
+                            Log.d("SunTime data:", "Sunrise & set has been saved!");
                             // Call some intent to move screen on success?
                             Toast.makeText(context, "Sunrise & set has been uploaded to DB",
                                     Toast.LENGTH_LONG).show();
@@ -128,38 +138,21 @@ public class WeatherDataController {
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    Log.d("Weather data:", "Failure: Document has not been saved!", e);
+                    Log.d("SunTime data:", "Failure: Document has not been saved!", e);
+                    Toast.makeText(context, "Sunrise & set data has failed to upload to DB",
+                            Toast.LENGTH_LONG).show();
                 }
             });
         }
     }
 
 
-    public String weatherDataPathBuilder(String country, String city) {
-        return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + WEATHER_PATH;
+    public String forecastDataPathBuilder(String country, String city) {
+        return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + FORECAST_PATH;
     }
 
     public String sunTimeDataPathBuilder(String country, String city) {
-        return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + SUNRISE_SUNSET_PATH;
-    }
-
-
-    private WeatherDataDTO getWeatherDTO(FullWeatherData fullWeatherData) {
-        return new WeatherDataDTO(fullWeatherData.getDegreesCelsius(),
-                fullWeatherData.getTimestamp());
-    }
-
-    private SunriseSunsetDTO getSunTimeDTO(SunriseSunset sunriseSunset) {
-        return new SunriseSunsetDTO
-                (sunriseSunset.getLatitude(),
-                        sunriseSunset.getLongitude(),
-                        sunriseSunset.getLocationKey(),
-                        sunriseSunset.getDate(),
-                        sunriseSunset.getMonth(),
-                        sunriseSunset.getYear(),
-                        sunriseSunset.getSunrise(),
-                        sunriseSunset.getSunset());
-
+        return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + SUNTIME_PATH;
     }
 
 }

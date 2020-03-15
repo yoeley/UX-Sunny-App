@@ -1,9 +1,5 @@
 package com.example.sunnyapp;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 
@@ -20,7 +16,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;

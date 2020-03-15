@@ -27,6 +27,19 @@ public class Forecast implements Serializable {
     @JsonProperty("foreCast")
     private ArrayList<Double> foreCast;
 
+    public Forecast() {
+    }
+
+    public Forecast(Double latitude, Double longitude, String locationKey, String dateTime,
+                    Double currCondition, ArrayList<Double> foreCast) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.locationKey = locationKey;
+        this.dateTime = dateTime;
+        this.currCondition = currCondition;
+        this.foreCast = foreCast;
+    }
+
     public Double getLatitude() {
         return latitude;
     }

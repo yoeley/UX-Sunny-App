@@ -2,14 +2,11 @@ package com.example.sunnyapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
-import com.google.firebase.Timestamp;
-
-import java.util.Date;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,12 +17,8 @@ public class MainActivity extends AppCompatActivity {
         boolean firstSignIn = true;
 
         WeatherDataController weatherDataController = WeatherDataController.getInstance();
-//        WeatherDataDTO weatherData = weatherDataController.
-//                getWeatherDataByLocation(weatherDataController.
-//                        weatherDataPathBuilder("Israel", "Jerusalem"));
+
         // Need to insert data converted from GPS to country + city.
-
-
 //        Intent ImageManagerActivity = new Intent(getBaseContext(), ImageManagerActivity.class);
 //        startActivity(ImageManagerActivity);
 
@@ -37,24 +30,38 @@ public class MainActivity extends AppCompatActivity {
         }
          */
 
-        Date date = new Date();
-        Timestamp now = new Timestamp(date);
-        FullWeatherData fullWeatherData = new FullWeatherData("Country", "City", 20, now);
-        FullWeatherData receivedData = weatherDataController.getWeatherDataByLocation(this, "Country", "City");
-        weatherDataController.saveWeatherDataByLocation(this, fullWeatherData);
+        ArrayList<Double> forecastData = new ArrayList<Double>() {
+            {
+                add(10.0);
+                add(11.0);
+                add(12.0);
+                add(13.0);
+                add(14.0);
+            }
+        };
+        SunriseSunset sunriseSunset = new SunriseSunset(10.0, 10.0, "locationKey", 1,
+                1, 2020, "sunrise", "sunset");
+
+        Forecast forecast = new Forecast(10.0, 10.0, "locationKey", "dateTime",
+                11.0, forecastData);
+
+        FullWeatherData fullWeatherData = new FullWeatherData("England", "London", sunriseSunset, forecast);
+
+        weatherDataController.saveForecastDataByLocation(this, fullWeatherData.getForecast(), fullWeatherData.getCountry(), fullWeatherData.getCity());
+        weatherDataController.saveSunTimesDataByLocation(this, fullWeatherData.getSunriseSunset(), fullWeatherData.getCountry(), fullWeatherData.getCity());
+
+        SunriseSunset sunriseSunset1 = weatherDataController.getSunTimesDataByLocation(this, "Israel", "Tel-Aviv");
+        Forecast forecast1 = weatherDataController.getForecastDataByLocation(this, "Israel", "Tel-Aviv");
 
 
-//        weatherDataDTO = weatherDataController.
-//                getWeatherDataByLocation(weatherDataController.
-//                        weatherDataPathBuilder("Israel", "Jerusalem"));
+        Toast.makeText(this, "Got data?",
+                Toast.LENGTH_LONG).show();
 
 
-        // this section goes to Aviad's weather prediction page without log in or sign in
+
+                // this section goes to Aviad's weather prediction page without log in or sign in
         Intent loadWeatherActivity = new Intent(getBaseContext(), LoadWeatherActivity.class);
         startActivity(loadWeatherActivity);
-
-
-//        String s = WeatherDataController.getInstance().getWeatherDataByLocation();
     }
 
 

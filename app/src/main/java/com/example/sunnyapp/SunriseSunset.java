@@ -30,6 +30,24 @@ public class SunriseSunset {
     @JsonProperty("sunset")
     private String sunset;
 
+
+    public SunriseSunset() {
+    }
+
+    public SunriseSunset(Double latitude, Double longitude, String locationKey, int date,
+                         int month, int year, String sunrise, String sunset) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.locationKey = locationKey;
+        this.date = date;
+        this.month = month;
+        this.year = year;
+        this.sunrise = sunrise;
+        this.sunset = sunset;
+    }
+
+
+
     public Double getLatitude() {
         return latitude;
     }
