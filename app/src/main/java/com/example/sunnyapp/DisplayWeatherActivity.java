@@ -3,6 +3,7 @@ package com.example.sunnyapp;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -199,5 +200,11 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.getLegend().setEnabled(false);
         chart.setVisibleXRangeMaximum(8);
         chart.invalidate();
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        moveTaskToBack(true);
     }
 }

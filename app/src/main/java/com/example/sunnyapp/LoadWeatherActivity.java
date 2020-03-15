@@ -41,6 +41,8 @@ public class LoadWeatherActivity extends AppCompatActivity {
     private ExternalGetLastLocationHandler externalGetLastLocationHandler;
     private LocationListenerGPS locationListenerGPS;
     private Boolean needToLoadWeather;
+    private Boolean shouldSetNotification;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,11 +54,10 @@ public class LoadWeatherActivity extends AppCompatActivity {
         weatherLoader = WeatherLoader.getInstance();
         locationListenerGPS = new LocationListenerGPS();
         needToLoadWeather = true;
+        shouldSetNotification = true;
         loadWeatherActivity = this;
 
         getLastLocation();
-
-        setScheduler();
     }
 
     public void externalGetLastLocation() {
@@ -72,6 +73,7 @@ public class LoadWeatherActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<Location> task) {
                                 location = task.getResult();
+                                setGetLastLocationAgain();
                                 if (location == null) {
                                     requestNewLocationData();
                                 } else {
@@ -213,29 +215,43 @@ public class LoadWeatherActivity extends AppCompatActivity {
 //        }
 //    }
 
-    private void setScheduler() {
-        externalGetLastLocationHandler = ExternalGetLastLocationHandler.getInstance();
-        externalGetLastLocationHandler.setLoadWeatherActivity(this);
-
-        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, LoadingScheduler.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(), 600000, pendingIntent);
+    private void setGetLastLocationAgain() {
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                getLastLocation();
+            }
+        }, 600000);
     }
 
-    /**
-     * this function will cancel the scheduler that schedules reload of the weather and check if the
-     * user is outside every so often. its not neede or called right now, but i thought it's best if
-     * it's here.
-     */
-    private void cancelScheduler() {
+
+    private void setPickWeatherNotificationScheduler(long pickWeatherTimeMillis) {
         AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, LoadingScheduler.class);
+        Intent intent = new Intent(this, PickWeatherNotificationScheduler.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, pickWeatherTimeMillis, pendingIntent);
+    }
+
+    private void cancelPickWeatherNotificationScheduler() {
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, PickWeatherNotificationScheduler.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
         alarmManager.cancel(pendingIntent);
     }
 
+    private void setNotification() {
+        long pickWeatherTimeMillis = weatherLoader.getPickWeatherTimeMillis();
+        setPickWeatherNotificationScheduler(pickWeatherTimeMillis);
+    }
+
     public void goToDisplayWeatherActivity() {
+        cancelPickWeatherNotificationScheduler();
+        // TODO: in future development of the app, the user will be able to set the notifications
+        // TODO: on/off permanently, and the user's decision ("shouldSetNotification") will be saved and retrieved from a file.
+        if (shouldSetNotification) {
+            setNotification();
+        }
+
         Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
         startActivity(displayWeatherActivity);
     }
