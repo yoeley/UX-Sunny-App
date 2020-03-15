@@ -200,4 +200,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.setVisibleXRangeMaximum(8);
         chart.invalidate();
     }
+
+    @Override
+    public void onBackPressed()
+    {
+        moveTaskToBack(true);
+    }
 }

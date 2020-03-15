@@ -32,6 +32,11 @@
         </activity>
 
         <receiver
+            android:name="com.example.sunnyapp.PickWeatherNotificationScheduler"
+            android:exported="false">
+        </receiver>
+
+        <receiver
             android:name="com.example.sunnyapp.LoadingScheduler"
             android:exported="false">
         </receiver>
