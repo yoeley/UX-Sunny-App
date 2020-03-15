@@ -33,7 +33,9 @@ public class WeatherLoader {
     private final static String weatherRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/%s?apikey=%s&details=true&metric=true";
     private final static String currConditionsRequestBodyFormat = "http://dataservice.accuweather.com/currentconditions/v1/%s?apikey=%s&details=true";
     private final static String daily5DaysRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/daily/5day/%s?apikey=%s&details=true&metric=true";
+    private final WeatherDataController weatherDataController = WeatherDataController.getInstance();
 
+    private final int NUM_OF_ATTEMPTS = 5;
     private final static long ONE_HOUR = 3600000;
 
     private Location location = null;
@@ -47,15 +49,11 @@ public class WeatherLoader {
     private WeatherLoader() {
     }
 
-    public static WeatherLoader getInstance()
-    {
-        if (weatherLoader == null)
-        {
+    public static WeatherLoader getInstance() {
+        if (weatherLoader == null) {
             //synchronized block to remove overhead
-            synchronized (WeatherLoader.class)
-            {
-                if(weatherLoader == null)
-                {
+            synchronized (WeatherLoader.class) {
+                if (weatherLoader == null) {
                     // if instance is null, initialize
                     weatherLoader = new WeatherLoader();
                 }
@@ -89,7 +87,9 @@ public class WeatherLoader {
     }
 
     @NonNull
-    public static String staticToString(){return "The object as a string.";}
+    public static String staticToString() {
+        return "The object as a string.";
+    }
 
     public long getPickWeatherTimeMillis() {
         ArrayList<Double> currForecast = forecast.getForeCast();
@@ -99,14 +99,14 @@ public class WeatherLoader {
         long forecastTimeInMillis = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
         long forecastTimeRoundedToNextHour = forecastTimeInMillis + (ONE_HOUR - (forecastTimeInMillis % ONE_HOUR));
 
-        return  forecastTimeRoundedToNextHour + indexOfMaxForecast * ONE_HOUR;
+        return forecastTimeRoundedToNextHour + indexOfMaxForecast * ONE_HOUR;
     }
 
     private class getWeatherTask extends AsyncTask<Integer, Integer, Integer> {
 
         private String obtainLocationKey(OkHttpClient client) {
             Request keyRequest = new Request.Builder()
-                    .url(String.format(keyRequestBodyFormat,  apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
+                    .url(String.format(keyRequestBodyFormat, apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
                     .build();
 
             Response keyResponse = null;
@@ -134,7 +134,7 @@ public class WeatherLoader {
 
         private JSONArray obtainWeatherForecastJSON(OkHttpClient client, String locationKey) {
             Request weatherRrequest = new Request.Builder()
-                    .url(String.format(weatherRequestBodyFormat,  locationKey, apiKey))
+                    .url(String.format(weatherRequestBodyFormat, locationKey, apiKey))
                     .build();
 
             Response weatherResponse = null;
@@ -159,7 +159,7 @@ public class WeatherLoader {
 
         private JSONArray obtainCurrConditions(OkHttpClient client, String locationKey) {
             Request currConditionsRrequest = new Request.Builder()
-                    .url(String.format(currConditionsRequestBodyFormat,  locationKey, apiKey))
+                    .url(String.format(currConditionsRequestBodyFormat, locationKey, apiKey))
                     .build();
 
             Response currConditionsResponse = null;
@@ -184,7 +184,7 @@ public class WeatherLoader {
 
         private JSONObject obtainDaily5DayForecast(OkHttpClient client, String locationKey) {
             Request daily5DaysRrequest = new Request.Builder()
-                    .url(String.format(daily5DaysRequestBodyFormat,  locationKey, apiKey))
+                    .url(String.format(daily5DaysRequestBodyFormat, locationKey, apiKey))
                     .build();
 
             Response daily5DaysResponse = null;
@@ -216,6 +216,32 @@ public class WeatherLoader {
 //            JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
 //            JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
 //            JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
+
+
+            String country = "Israel";
+            String city = "Jerusalem";
+            int attempts = 0;
+            forecast = null;
+            while (forecast == null && attempts < NUM_OF_ATTEMPTS) {
+                forecast = weatherDataController.getForecastDataByLocation(country, city);
+                attempts++;
+                if(attempts == 5){
+                    //TODO Error to user? or what actions should we do. maybe log num of attempts.
+                }
+            }
+
+            sunriseSunset = null;
+            attempts = 0;
+            while (sunriseSunset == null && attempts < NUM_OF_ATTEMPTS) {
+                sunriseSunset = weatherDataController.getSunTimesDataByLocation(country, city);
+                attempts++;
+                if(attempts == 5){
+                    //TODO Error to user? or what actions should we do. maybe log num of attempts.
+                }
+            }
+
+
+
 
             String locationKey = locationKeyExample;
             JSONArray forecastJSON = null;
@@ -251,19 +277,19 @@ public class WeatherLoader {
     }
 
     // Added functions, might be else where.
-    private boolean isDataUpdated(long savedUnixTimestamp, int timeoutInSeconds){
+    private boolean isDataUpdated(long savedUnixTimestamp, int timeoutInSeconds) {
         Calendar cal = Calendar.getInstance();
-        TimeZone timeZone =  cal.getTimeZone();
-        Date cals =    Calendar.getInstance(TimeZone.getDefault()).getTime();
-        long milliseconds =   cals.getTime();
+        TimeZone timeZone = cal.getTimeZone();
+        Date cals = Calendar.getInstance(TimeZone.getDefault()).getTime();
+        long milliseconds = cals.getTime();
         milliseconds = milliseconds + timeZone.getOffset(milliseconds);
         long currentUnixTimeStamp = milliseconds / 1000L;
 
-        return savedUnixTimestamp - currentUnixTimeStamp <  timeoutInSeconds; // true if < 1 Hour
+        return savedUnixTimestamp - currentUnixTimeStamp < timeoutInSeconds; // true if < 1 Hour
     }
 
 
-    private boolean isLocationProximate(Location savedDocation, float radiusInKm){
+    private boolean isLocationProximate(Location savedDocation, float radiusInKm) {
 
         double latitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLatitude());
         double longitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLongitude());
@@ -275,6 +301,6 @@ public class WeatherLoader {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double dist = EARTH_RADIUS * c;
-        return  dist < radiusInKm; // true if distance of saved data from current location < radiusInKm KM
+        return dist < radiusInKm; // true if distance of saved data from current location < radiusInKm KM
     }
 }
