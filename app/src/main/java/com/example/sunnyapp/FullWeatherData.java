@@ -6,46 +6,33 @@ import java.util.Date;
 
 public class FullWeatherData {
 
-    private Timestamp timestamp;
-    private int degreesCelsius;
+
     private String country;
     private String city;
+    private SunriseSunset sunriseSunset;
+    private Forecast forecast;
 
-    private Date date;
-
-    public FullWeatherData(){}
-
-    public FullWeatherData(String country, String city, int degreesCelcius, Timestamp timestamp){
-        this.degreesCelsius = degreesCelcius;
-        this.timestamp = timestamp;
+    public FullWeatherData(String country, String city, SunriseSunset sunriseSunset, Forecast forecast) {
         this.country = country;
-        this.city= city;
-
+        this.city = city;
+        this.sunriseSunset = sunriseSunset;
+        this.forecast = forecast;
     }
 
-
-    public Timestamp getTimestamp() {
-        return timestamp;
+    public SunriseSunset getSunriseSunset() {
+        return sunriseSunset;
     }
 
-    public void setTimestamp(Timestamp timestamp) {
-        this.timestamp = timestamp;
+    public void setSunriseSunset(SunriseSunset sunriseSunset) {
+        this.sunriseSunset = sunriseSunset;
     }
 
-    public int getDegreesCelsius() {
-        return degreesCelsius;
+    public Forecast getForecast() {
+        return forecast;
     }
 
-    public void setDegreesCelsius(int degrees_celcius) {
-        this.degreesCelsius = degrees_celcius;
-    }
-
-    public Date getDate() {
-        return timestamp.toDate();
-    }
-
-    public void setDate(Date date){
-        this.date = date;
+    public void setForecast(Forecast forecast) {
+        this.forecast = forecast;
     }
 
     public String getCountry() {
