@@ -11,9 +11,6 @@ public class WeatherDataDTO {
     private Timestamp timestamp;
     private int degreesCelsius;
 
-    // Converted from timestamp to Date.
-//    private Date date;
-
     public WeatherDataDTO(){}
 
     public WeatherDataDTO(int degreesCelcius, Timestamp timestamp){
@@ -36,9 +33,5 @@ public class WeatherDataDTO {
 
     public void setDegreesCelsius(int degrees_celcius) {
         this.degreesCelsius = degrees_celcius;
-    }
-
-    public Date getDate() {
-        return timestamp.toDate();
     }
 }

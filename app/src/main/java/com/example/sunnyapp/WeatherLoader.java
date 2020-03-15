@@ -252,7 +252,7 @@ public class WeatherLoader {
     }
 
     // Added functions, might be else where.
-    private boolean isDataUpdated(long savedUnixTimestamp){
+    private boolean isDataUpdated(long savedUnixTimestamp, int timeoutInSeconds){
         Calendar cal = Calendar.getInstance();
         TimeZone timeZone =  cal.getTimeZone();
         Date cals =    Calendar.getInstance(TimeZone.getDefault()).getTime();
@@ -260,10 +260,11 @@ public class WeatherLoader {
         milliseconds = milliseconds + timeZone.getOffset(milliseconds);
         long currentUnixTimeStamp = milliseconds / 1000L;
 
-        return savedUnixTimestamp - currentUnixTimeStamp <  3600; // true if < 1 Hour
+        return savedUnixTimestamp - currentUnixTimeStamp <  timeoutInSeconds; // true if < 1 Hour
     }
 
-    private boolean isLocationProximate(Location savedDocation){
+
+    private boolean isLocationProximate(Location savedDocation, float radiusInKm){
 
         double latitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLatitude());
         double longitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLongitude());
@@ -275,6 +276,6 @@ public class WeatherLoader {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double dist = EARTH_RADIUS * c;
-        return  dist < 50; // true if distance of saved data from current location < 50 KM
+        return  dist < radiusInKm; // true if distance of saved data from current location < radiusInKm KM
     }
 }
