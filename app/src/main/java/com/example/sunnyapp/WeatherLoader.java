@@ -1,5 +1,9 @@
 package com.example.sunnyapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 
@@ -14,7 +18,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -27,6 +34,8 @@ public class WeatherLoader {
     private final static String weatherRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/%s?apikey=%s&details=true&metric=true";
     private final static String currConditionsRequestBodyFormat = "http://dataservice.accuweather.com/currentconditions/v1/%s?apikey=%s&details=true";
     private final static String daily5DaysRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/daily/5day/%s?apikey=%s&details=true&metric=true";
+
+    private final static long ONE_HOUR = 3600000;
 
     private Location location = null;
 
@@ -82,6 +91,17 @@ public class WeatherLoader {
 
     @NonNull
     public static String staticToString(){return "The object as a string.";}
+
+    public long getPickWeatherTimeMillis() {
+        ArrayList<Double> currForecast = forecast.getForeCast();
+        Double maxForecast = Collections.max(currForecast);
+        long indexOfMaxForecast = currForecast.indexOf(maxForecast);
+
+        long forecastTimeInMillis = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
+        long forecastTimeRoundedToNextHour = forecastTimeInMillis + (ONE_HOUR - (forecastTimeInMillis % ONE_HOUR));
+
+        return  forecastTimeRoundedToNextHour + indexOfMaxForecast * ONE_HOUR;
+    }
 
     private class getWeatherTask extends AsyncTask<Integer, Integer, Integer> {
 
