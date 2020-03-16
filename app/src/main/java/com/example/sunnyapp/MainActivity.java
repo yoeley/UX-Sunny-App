@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private Location location;
     private MainActivity mainActivity;
     private LocationListenerGPS locationListenerGPS;
+    private Boolean isFirstDisplay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         weatherLoader = WeatherLoader.getInstance();
         locationListenerGPS = new LocationListenerGPS();
         mainActivity = this;
+        isFirstDisplay = true;
 
         getLastLocation();
     }
@@ -208,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
+                isFirstDisplay = false;
                 getLastLocation();
             }
         }, 600000);
@@ -215,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void goToDisplayWeatherActivity() {
         Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
+        displayWeatherActivity.putExtra("isFirstDisplay", isFirstDisplay);
         startActivity(displayWeatherActivity);
     }
 
