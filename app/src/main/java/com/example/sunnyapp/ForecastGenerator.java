@@ -36,9 +36,20 @@ public class ForecastGenerator {
         forecast.setLocationKey(locationKey);
         forecast.setDateTime(DateStringConverter.dateToString(currDateTime));
 
+        forecast.setWeatherIcon(weatherIcon(currConditionsJSON));
         forecast.setCurrCondition(currConditionSunnyFactor(currConditionsJSON));
         forecast.setForeCast(forecastSunnyFactor(forecastJSON));
         return forecast;
+    }
+
+    private static int weatherIcon(JSONArray currConditionsJSON) {
+        Integer weatherIcon = 0;
+        try {
+            weatherIcon = currConditionsJSON.getJSONObject(0).getInt("WeatherIcon");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return weatherIcon;
     }
 
     private static Double sunnyFactor(JSONObject forecastOneHour) {
