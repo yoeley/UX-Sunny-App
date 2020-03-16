@@ -40,7 +40,6 @@ public class LoadWeatherActivity extends AppCompatActivity {
     private LoadWeatherActivity loadWeatherActivity;
     private ExternalGetLastLocationHandler externalGetLastLocationHandler;
     private LocationListenerGPS locationListenerGPS;
-    private Boolean needToLoadWeather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +50,6 @@ public class LoadWeatherActivity extends AppCompatActivity {
         logo = findViewById(R.id.logo);
         weatherLoader = WeatherLoader.getInstance();
         locationListenerGPS = new LocationListenerGPS();
-        needToLoadWeather = true;
         loadWeatherActivity = this;
 
         getLastLocation();
@@ -75,10 +73,7 @@ public class LoadWeatherActivity extends AppCompatActivity {
                                     requestNewLocationData();
                                 } else {
                                     checkIsOutdoors();
-                                    if (needToLoadWeather) {
-                                        needToLoadWeather = false;
-                                        loadWeather();
-                                    }
+                                    loadWeather();
                                 }
                             }
                         }

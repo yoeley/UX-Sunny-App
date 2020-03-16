@@ -34,7 +34,8 @@ public class WeatherLoader {
     private final static String currConditionsRequestBodyFormat = "http://dataservice.accuweather.com/currentconditions/v1/%s?apikey=%s&details=true";
     private final static String daily5DaysRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/daily/5day/%s?apikey=%s&details=true&metric=true";
 
-    private final static long ONE_HOUR = 3600000;
+    private final static long ONE_HOUR = 3600000; // in millis
+    private final static long ONE_DAY = 86400000; // in millis
 
     private Location location = null;
 
@@ -43,6 +44,9 @@ public class WeatherLoader {
 
     private Forecast forecast;
     private SunriseSunset sunriseSunset;
+    private LocationInfo locationInfo;
+
+    private WeatherDataController weatherDataController = WeatherDataController.getInstance();
 
     private WeatherLoader() {
     }
@@ -207,33 +211,157 @@ public class WeatherLoader {
             return daily5DaysJSON;
         }
 
+        private Boolean checkLocationUpToDate(Double formerLatitude, Double formerLongitude) {
+            Double latitude = location.getLatitude();
+            Double longitude = location.getLongitude();
+
+            float results[] = new float[1];
+            try {
+                Location.distanceBetween(formerLatitude, formerLongitude, latitude, longitude, results);
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
+
+            if (results[0] > 1000) {
+                return false;
+            }
+            return true;
+        }
+
+        private Boolean checkSunriseSunsetUpToDate(Date currDateTime) {
+            if (sunriseSunset == null) {
+                return false;
+            }
+
+            if (!checkLocationUpToDate(sunriseSunset.getLatitude(), sunriseSunset.getLongitude())) {
+                return false;
+            }
+
+            long formerTime = DateStringConverter.stringToDate(sunriseSunset.getDateTime()).getTime();
+            long currTime = currDateTime.getTime();
+
+            // if current time and time when the sunriseSunset was taken don't have the same day, return false
+            if ((formerTime - (formerTime % ONE_DAY)) - (currTime - (currTime % ONE_DAY)) != 0) {
+                return false;
+            }
+            return true;
+        }
+
+        private Boolean checkForecastUpToDate(Date currDateTime) {
+            if (forecast == null) {
+                return false;
+            }
+
+            if (!checkLocationUpToDate(forecast.getLatitude(), forecast.getLongitude())) {
+                return false;
+            }
+
+            long formerTime = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
+            long currTime = currDateTime.getTime();
+
+            // if current time and time when the forecast was taken don't have the same hour in the day, return false
+            if ((formerTime - (formerTime % ONE_HOUR)) - (currTime - (currTime % ONE_HOUR)) != 0) {
+                return false;
+            }
+            return true;
+        }
+
+        private void updateLocationInfo(OkHttpClient client) {
+            Request keyRequest = new Request.Builder()
+                    .url(String.format(keyRequestBodyFormat,  apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
+                    .build();
+
+            Response keyResponse = null;
+            String keyResult = null;
+            JSONObject keyResultJSON = null;
+            String locationKey = null;
+            String country = null;
+            String city = null;
+            try {
+                keyResponse = client.newCall(keyRequest).execute();
+                keyResult = keyResponse.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (keyResult != null) {
+                try {
+                    keyResultJSON = new JSONObject(keyResult);
+                    locationKey = keyResultJSON.getString("Key");
+                    country = keyResultJSON.getJSONObject("Country").getString("ID");
+                    city = keyResultJSON.getString("EnglishName");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            locationInfo = new LocationInfo(locationKey, country, city);
+        }
+
         @Override
         protected Integer doInBackground(Integer... callers) {
 
             OkHttpClient client = new OkHttpClient();
-
-//            String locationKey = obtainLocationKey(client);
-//            JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
-//            JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
-//            JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
-
-            String locationKey = locationKeyExample;
-            JSONArray forecastJSON = null;
-            JSONArray currConditionsJSON = null;
-            JSONObject daily5DaysJSON = null;
-            try {
-                forecastJSON = new JSONArray(forecastJSONExample);
-                currConditionsJSON = new JSONArray(currConditionsJSONExample);
-                daily5DaysJSON = new JSONObject(daily5DaysJSONExample);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
             Date currDateTime = Calendar.getInstance().getTime();
 
-            forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
-            sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
+            // checking if current forecast and sunriseSunset are up to date. if not, try loading from firebase.
+            if (!checkSunriseSunsetUpToDate(currDateTime)) {
+                updateLocationInfo(client);
+                sunriseSunset = weatherDataController.getSunTimesDataByLocation(loadWeatherActivity, locationInfo.getCountry(), locationInfo.getCity());
+                forecast = weatherDataController.getForecastDataByLocation(loadWeatherActivity, locationInfo.getCountry(), locationInfo.getCity());
+            }
+            else if (!checkForecastUpToDate(currDateTime)) {
+                updateLocationInfo(client);
+                forecast = weatherDataController.getForecastDataByLocation(loadWeatherActivity, locationInfo.getCountry(), locationInfo.getCity());
+            }
+            else {
+                // everything was already up to date - quit function
+                return null;
+            }
 
+//            String locationKey = locationInfo.getLocationKey();
+            String locationKey = locationKeyExample;
+
+            // checking if firebase forecast and sunriseSunset are up to date. if not, try querying AccuWeather.
+            if (!checkSunriseSunsetUpToDate(currDateTime)) {
+//                JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
+//                JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
+//                JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
+
+                JSONArray forecastJSON = null;
+                JSONArray currConditionsJSON = null;
+                JSONObject daily5DaysJSON = null;
+                try {
+                    forecastJSON = new JSONArray(forecastJSONExample);
+                    currConditionsJSON = new JSONArray(currConditionsJSONExample);
+                    daily5DaysJSON = new JSONObject(daily5DaysJSONExample);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
+                sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
+
+            }
+            else if (!checkForecastUpToDate(currDateTime)) {
+//                JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
+//                JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
+
+                JSONArray forecastJSON = null;
+                JSONArray currConditionsJSON = null;
+                try {
+                    forecastJSON = new JSONArray(forecastJSONExample);
+                    currConditionsJSON = new JSONArray(currConditionsJSONExample);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
+            }
+            else {
+                // everything from firebase was already up to date - quit function
+                return null;
+            }
             return null;
         }
 

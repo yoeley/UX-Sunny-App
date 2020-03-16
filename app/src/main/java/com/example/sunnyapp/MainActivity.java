@@ -39,8 +39,7 @@ public class MainActivity extends AppCompatActivity {
                 add(14.0);
             }
         };
-        SunriseSunset sunriseSunset = new SunriseSunset(10.0, 10.0, "locationKey", 1,
-                1, 2020, "sunrise", "sunset");
+        SunriseSunset sunriseSunset = new SunriseSunset(10.0, 10.0, "locationKey",  "dateTime","sunrise", "sunset");
 
         Forecast forecast = new Forecast(10.0, 10.0, "locationKey", "dateTime",
                 11.0, forecastData);

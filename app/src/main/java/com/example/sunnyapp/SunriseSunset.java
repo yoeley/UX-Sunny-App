@@ -15,14 +15,8 @@ public class SunriseSunset {
     @JsonProperty("locationKey")
     private String locationKey;
 
-    @JsonProperty("date")
-    private int date;
-
-    @JsonProperty("month")
-    private int month;
-
-    @JsonProperty("year")
-    private int year;
+    @JsonProperty("dateTime")
+    private String dateTime;
 
     @JsonProperty("sunrise")
     private String sunrise;
@@ -34,14 +28,11 @@ public class SunriseSunset {
     public SunriseSunset() {
     }
 
-    public SunriseSunset(Double latitude, Double longitude, String locationKey, int date,
-                         int month, int year, String sunrise, String sunset) {
+    public SunriseSunset(Double latitude, Double longitude, String locationKey, String dateTime, String sunrise, String sunset) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.locationKey = locationKey;
-        this.date = date;
-        this.month = month;
-        this.year = year;
+        this.dateTime = dateTime;
         this.sunrise = sunrise;
         this.sunset = sunset;
     }
@@ -72,6 +63,10 @@ public class SunriseSunset {
         this.locationKey = locationKey;
     }
 
+    public String getDateTime() { return dateTime; }
+
+    public void setDateTime(String dateTime) { this.dateTime = dateTime; }
+
     public String getSunrise() {
         return sunrise;
     }
@@ -86,29 +81,5 @@ public class SunriseSunset {
 
     public void setSunset(String sunset) {
         this.sunset = sunset;
-    }
-
-    public int getDate() {
-        return date;
-    }
-
-    public void setDate(int date) {
-        this.date = date;
-    }
-
-    public int getMonth() {
-        return month;
-    }
-
-    public void setMonth(int month) {
-        this.month = month;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
     }
 }
