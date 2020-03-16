@@ -33,9 +33,11 @@ public class WeatherLoader {
     private final static String weatherRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/%s?apikey=%s&details=true&metric=true";
     private final static String currConditionsRequestBodyFormat = "http://dataservice.accuweather.com/currentconditions/v1/%s?apikey=%s&details=true";
     private final static String daily5DaysRequestBodyFormat = "http://dataservice.accuweather.com/forecasts/v1/daily/5day/%s?apikey=%s&details=true&metric=true";
+    private final WeatherDataController weatherDataController = WeatherDataController.getInstance();
 
     private final static long ONE_HOUR = 3600000; // in millis
     private final static long ONE_DAY = 86400000; // in millis
+    private final int NUM_OF_ATTEMPTS = 5;
 
     private Location location = null;
 
@@ -46,20 +48,14 @@ public class WeatherLoader {
     private SunriseSunset sunriseSunset;
     private LocationInfo locationInfo;
 
-    private WeatherDataController weatherDataController = WeatherDataController.getInstance();
-
     private WeatherLoader() {
     }
 
-    public static WeatherLoader getInstance()
-    {
-        if (weatherLoader == null)
-        {
+    public static WeatherLoader getInstance() {
+        if (weatherLoader == null) {
             //synchronized block to remove overhead
-            synchronized (WeatherLoader.class)
-            {
-                if(weatherLoader == null)
-                {
+            synchronized (WeatherLoader.class) {
+                if (weatherLoader == null) {
                     // if instance is null, initialize
                     weatherLoader = new WeatherLoader();
                 }
@@ -93,7 +89,9 @@ public class WeatherLoader {
     }
 
     @NonNull
-    public static String staticToString(){return "The object as a string.";}
+    public static String staticToString() {
+        return "The object as a string.";
+    }
 
     public long getPickWeatherTimeMillis() {
         ArrayList<Double> currForecast = forecast.getForeCast();
@@ -103,14 +101,14 @@ public class WeatherLoader {
         long forecastTimeInMillis = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
         long forecastTimeRoundedToNextHour = forecastTimeInMillis + (ONE_HOUR - (forecastTimeInMillis % ONE_HOUR));
 
-        return  forecastTimeRoundedToNextHour + indexOfMaxForecast * ONE_HOUR;
+        return forecastTimeRoundedToNextHour + indexOfMaxForecast * ONE_HOUR;
     }
 
     private class getWeatherTask extends AsyncTask<Integer, Integer, Integer> {
 
         private String obtainLocationKey(OkHttpClient client) {
             Request keyRequest = new Request.Builder()
-                    .url(String.format(keyRequestBodyFormat,  apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
+                    .url(String.format(keyRequestBodyFormat, apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
                     .build();
 
             Response keyResponse = null;
@@ -138,7 +136,7 @@ public class WeatherLoader {
 
         private JSONArray obtainWeatherForecastJSON(OkHttpClient client, String locationKey) {
             Request weatherRrequest = new Request.Builder()
-                    .url(String.format(weatherRequestBodyFormat,  locationKey, apiKey))
+                    .url(String.format(weatherRequestBodyFormat, locationKey, apiKey))
                     .build();
 
             Response weatherResponse = null;
@@ -163,7 +161,7 @@ public class WeatherLoader {
 
         private JSONArray obtainCurrConditions(OkHttpClient client, String locationKey) {
             Request currConditionsRrequest = new Request.Builder()
-                    .url(String.format(currConditionsRequestBodyFormat,  locationKey, apiKey))
+                    .url(String.format(currConditionsRequestBodyFormat, locationKey, apiKey))
                     .build();
 
             Response currConditionsResponse = null;
@@ -188,7 +186,7 @@ public class WeatherLoader {
 
         private JSONObject obtainDaily5DayForecast(OkHttpClient client, String locationKey) {
             Request daily5DaysRrequest = new Request.Builder()
-                    .url(String.format(daily5DaysRequestBodyFormat,  locationKey, apiKey))
+                    .url(String.format(daily5DaysRequestBodyFormat, locationKey, apiKey))
                     .build();
 
             Response daily5DaysResponse = null;
@@ -307,12 +305,12 @@ public class WeatherLoader {
             // checking if current forecast and sunriseSunset are up to date. if not, try loading from firebase.
             if (!checkSunriseSunsetUpToDate(currDateTime)) {
                 updateLocationInfo(client);
-                sunriseSunset = weatherDataController.getSunTimesDataByLocation(loadWeatherActivity, locationInfo.getCountry(), locationInfo.getCity());
-                forecast = weatherDataController.getForecastDataByLocation(loadWeatherActivity, locationInfo.getCountry(), locationInfo.getCity());
+                getForcastFromDB();
+                getSunTimeFromDB();
             }
             else if (!checkForecastUpToDate(currDateTime)) {
                 updateLocationInfo(client);
-                forecast = weatherDataController.getForecastDataByLocation(loadWeatherActivity, locationInfo.getCountry(), locationInfo.getCity());
+                getForcastFromDB();
             }
             else {
                 // everything was already up to date - quit function
@@ -341,6 +339,8 @@ public class WeatherLoader {
 
                 forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
                 sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
+                weatherDataController.saveForecastDataByLocation(loadWeatherActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
+                weatherDataController.saveSunTimesDataByLocation(loadWeatherActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
 
             }
             else if (!checkForecastUpToDate(currDateTime)) {
@@ -357,6 +357,7 @@ public class WeatherLoader {
                 }
 
                 forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
+                weatherDataController.saveForecastDataByLocation(loadWeatherActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
             }
             else {
                 // everything from firebase was already up to date - quit function
@@ -378,20 +379,49 @@ public class WeatherLoader {
         private final String daily5DaysJSONExample = "{\"Headline\":{\"EffectiveDate\":\"2020-02-29T19:00:00+02:00\",\"EffectiveEpochDate\":1582995600,\"Severity\":4,\"Text\":\"Expect showers Saturday evening\",\"Category\":\"rain\",\"EndDate\":\"2020-03-01T01:00:00+02:00\",\"EndEpochDate\":1583017200,\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/extended-weather-forecast\\/212559?unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?unit=c&lang=en-us\"},\"DailyForecasts\":[{\"Date\":\"2020-02-29T07:00:00+02:00\",\"EpochDate\":1582952400,\"Sun\":{\"Rise\":\"2020-02-29T06:08:00+02:00\",\"EpochRise\":1582949280,\"Set\":\"2020-02-29T17:38:00+02:00\",\"EpochSet\":1582990680},\"Moon\":{\"Rise\":\"2020-02-29T09:20:00+02:00\",\"EpochRise\":1582960800,\"Set\":\"2020-02-29T22:47:00+02:00\",\"EpochSet\":1583009220,\"Phase\":\"WaxingCrescent\",\"Age\":6},\"Temperature\":{\"Minimum\":{\"Value\":12,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":18.9,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":7.8,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":18,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":7.8,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":16.7,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":6.1,\"DegreeDaySummary\":{\"Heating\":{\"Value\":3,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":37,\"Category\":\"Good\",\"CategoryValue\":1,\"Type\":\"Ozone\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":5,\"Category\":\"Moderate\",\"CategoryValue\":2}],\"Day\":{\"Icon\":14,\"IconPhrase\":\"Partly sunny w\\/ showers\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"Not as warm\",\"LongPhrase\":\"A passing shower this morning, then becoming breezy; not as warm\",\"PrecipitationProbability\":56,\"ThunderstormProbability\":20,\"RainProbability\":56,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":24.1,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":230,\"Localized\":\"SW\",\"English\":\"SW\"}},\"WindGust\":{\"Speed\":{\"Value\":63,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":220,\"Localized\":\"SW\",\"English\":\"SW\"}},\"TotalLiquid\":{\"Value\":0.8,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0.8,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0.5,\"HoursOfRain\":0.5,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":51},\"Night\":{\"Icon\":39,\"IconPhrase\":\"Partly cloudy w\\/ showers\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Moderate\",\"ShortPhrase\":\"A couple of evening showers\",\"LongPhrase\":\"Spotty evening showers; otherwise, partly cloudy\",\"PrecipitationProbability\":86,\"ThunderstormProbability\":20,\"RainProbability\":86,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":20.4,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":256,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"WindGust\":{\"Speed\":{\"Value\":48.2,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":265,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":6.3,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":6.3,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":2,\"HoursOfRain\":2,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":63},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=1&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=1&unit=c&lang=en-us\"},{\"Date\":\"2020-03-01T07:00:00+02:00\",\"EpochDate\":1583038800,\"Sun\":{\"Rise\":\"2020-03-01T06:07:00+02:00\",\"EpochRise\":1583035620,\"Set\":\"2020-03-01T17:39:00+02:00\",\"EpochSet\":1583077140},\"Moon\":{\"Rise\":\"2020-03-01T09:53:00+02:00\",\"EpochRise\":1583049180,\"Set\":\"2020-03-01T23:44:00+02:00\",\"EpochSet\":1583099040,\"Phase\":\"WaxingCrescent\",\"Age\":7},\"Temperature\":{\"Minimum\":{\"Value\":10.1,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":17.7,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":9.5,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":16,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":9.5,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":15.5,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":4.8,\"DegreeDaySummary\":{\"Heating\":{\"Value\":4,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":38,\"Category\":\"Good\",\"CategoryValue\":1,\"Type\":\"Ozone\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":2,\"Category\":\"Low\",\"CategoryValue\":1}],\"Day\":{\"Icon\":14,\"IconPhrase\":\"Partly sunny w\\/ showers\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"Clouds and sun with a shower\",\"LongPhrase\":\"Times of clouds and sun with a stray shower\",\"PrecipitationProbability\":40,\"ThunderstormProbability\":20,\"RainProbability\":40,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":22.2,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":283,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"WindGust\":{\"Speed\":{\"Value\":44.4,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":289,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"TotalLiquid\":{\"Value\":0.5,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0.5,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":1,\"HoursOfRain\":1,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":63},\"Night\":{\"Icon\":36,\"IconPhrase\":\"Intermittent clouds\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Partly cloudy\",\"LongPhrase\":\"Partly cloudy\",\"PrecipitationProbability\":3,\"ThunderstormProbability\":0,\"RainProbability\":3,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":7.4,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":180,\"Localized\":\"S\",\"English\":\"S\"}},\"WindGust\":{\"Speed\":{\"Value\":25.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":256,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":59},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=2&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=2&unit=c&lang=en-us\"},{\"Date\":\"2020-03-02T07:00:00+02:00\",\"EpochDate\":1583125200,\"Sun\":{\"Rise\":\"2020-03-02T06:06:00+02:00\",\"EpochRise\":1583121960,\"Set\":\"2020-03-02T17:39:00+02:00\",\"EpochSet\":1583163540},\"Moon\":{\"Rise\":\"2020-03-02T10:30:00+02:00\",\"EpochRise\":1583137800,\"Set\":\"2020-03-03T00:41:00+02:00\",\"EpochSet\":1583188860,\"Phase\":\"First\",\"Age\":8},\"Temperature\":{\"Minimum\":{\"Value\":8.7,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":18.4,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":9,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":18,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":9,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":17.1,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":3.3,\"DegreeDaySummary\":{\"Heating\":{\"Value\":4,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":42,\"Category\":\"Good\",\"CategoryValue\":1,\"Type\":\"Ozone\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":2,\"Category\":\"Low\",\"CategoryValue\":1}],\"Day\":{\"Icon\":6,\"IconPhrase\":\"Mostly cloudy\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Sun and areas of low clouds\",\"LongPhrase\":\"Sun and areas of low clouds\",\"PrecipitationProbability\":1,\"ThunderstormProbability\":0,\"RainProbability\":1,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":13,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":248,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"WindGust\":{\"Speed\":{\"Value\":25.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":269,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":78},\"Night\":{\"Icon\":33,\"IconPhrase\":\"Clear\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Clear\",\"LongPhrase\":\"Clear\",\"PrecipitationProbability\":0,\"ThunderstormProbability\":0,\"RainProbability\":0,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":5.6,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":90,\"Localized\":\"E\",\"English\":\"E\"}},\"WindGust\":{\"Speed\":{\"Value\":16.7,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":98,\"Localized\":\"E\",\"English\":\"E\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":6},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=3&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=3&unit=c&lang=en-us\"},{\"Date\":\"2020-03-03T07:00:00+02:00\",\"EpochDate\":1583211600,\"Sun\":{\"Rise\":\"2020-03-03T06:05:00+02:00\",\"EpochRise\":1583208300,\"Set\":\"2020-03-03T17:40:00+02:00\",\"EpochSet\":1583250000},\"Moon\":{\"Rise\":\"2020-03-03T11:13:00+02:00\",\"EpochRise\":1583226780,\"Set\":\"2020-03-04T01:40:00+02:00\",\"EpochSet\":1583278800,\"Phase\":\"WaxingGibbous\",\"Age\":9},\"Temperature\":{\"Minimum\":{\"Value\":11,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":22.2,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":11.2,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":24.1,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":11.2,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":20.7,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":11.2,\"DegreeDaySummary\":{\"Heating\":{\"Value\":1,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":60,\"Category\":\"Moderate\",\"CategoryValue\":2,\"Type\":\"Particle Pollution\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":5,\"Category\":\"Moderate\",\"CategoryValue\":2}],\"Day\":{\"Icon\":1,\"IconPhrase\":\"Sunny\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Sunny and warmer\",\"LongPhrase\":\"Warmer with brilliant sunshine\",\"PrecipitationProbability\":0,\"ThunderstormProbability\":0,\"RainProbability\":0,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":11.1,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":347,\"Localized\":\"NNW\",\"English\":\"NNW\"}},\"WindGust\":{\"Speed\":{\"Value\":31.5,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":319,\"Localized\":\"NW\",\"English\":\"NW\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":7},\"Night\":{\"Icon\":33,\"IconPhrase\":\"Clear\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Clear\",\"LongPhrase\":\"Clear\",\"PrecipitationProbability\":0,\"ThunderstormProbability\":0,\"RainProbability\":0,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":7.4,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":134,\"Localized\":\"SE\",\"English\":\"SE\"}},\"WindGust\":{\"Speed\":{\"Value\":20.4,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":92,\"Localized\":\"E\",\"English\":\"E\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":0},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=4&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=4&unit=c&lang=en-us\"},{\"Date\":\"2020-03-04T07:00:00+02:00\",\"EpochDate\":1583298000,\"Sun\":{\"Rise\":\"2020-03-04T06:04:00+02:00\",\"EpochRise\":1583294640,\"Set\":\"2020-03-04T17:41:00+02:00\",\"EpochSet\":1583336460},\"Moon\":{\"Rise\":\"2020-03-04T12:02:00+02:00\",\"EpochRise\":1583316120,\"Set\":\"2020-03-05T02:38:00+02:00\",\"EpochSet\":1583368680,\"Phase\":\"WaxingGibbous\",\"Age\":10},\"Temperature\":{\"Minimum\":{\"Value\":12.2,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":26.3,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":12.5,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":27.9,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":12.5,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":25,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":11.6,\"DegreeDaySummary\":{\"Heating\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":1,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":88,\"Category\":\"Moderate\",\"CategoryValue\":2,\"Type\":\"Particle Pollution\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":5,\"Category\":\"Moderate\",\"CategoryValue\":2}],\"Day\":{\"Icon\":1,\"IconPhrase\":\"Sunny\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Sunny and very warm\",\"LongPhrase\":\"Very warm with plenty of sunshine\",\"PrecipitationProbability\":0,\"ThunderstormProbability\":0,\"RainProbability\":0,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":9.3,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":83,\"Localized\":\"E\",\"English\":\"E\"}},\"WindGust\":{\"Speed\":{\"Value\":27.8,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":108,\"Localized\":\"ESE\",\"English\":\"ESE\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":0},\"Night\":{\"Icon\":34,\"IconPhrase\":\"Mostly clear\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Mainly clear\",\"LongPhrase\":\"Mainly clear\",\"PrecipitationProbability\":0,\"ThunderstormProbability\":0,\"RainProbability\":0,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":5.6,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":131,\"Localized\":\"SE\",\"English\":\"SE\"}},\"WindGust\":{\"Speed\":{\"Value\":20.4,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":170,\"Localized\":\"S\",\"English\":\"S\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":13},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=5&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/nehalim\\/212559\\/daily-weather-forecast\\/212559?day=5&unit=c&lang=en-us\"}]}";
     }
 
-    // Added functions, might be else where.
-    private boolean isDataUpdated(long savedUnixTimestamp, int timeoutInSeconds){
-        Calendar cal = Calendar.getInstance();
-        TimeZone timeZone =  cal.getTimeZone();
-        Date cals =    Calendar.getInstance(TimeZone.getDefault()).getTime();
-        long milliseconds =   cals.getTime();
-        milliseconds = milliseconds + timeZone.getOffset(milliseconds);
-        long currentUnixTimeStamp = milliseconds / 1000L;
+    private void getForcastFromDB()
+    {
+        int attempts = 0;
+        forecast = null;
+        while (forecast == null && attempts < NUM_OF_ATTEMPTS) {
+            forecast = weatherDataController.getForecastDataByLocation(loadWeatherActivity,
+                    locationInfo.getCountry(), locationInfo.getCity());
+            attempts++;
+            if(attempts == 5){
+                //TODO Error to user? or what actions should we do. maybe log num of attempts.
+            }
+        }
+    }
 
-        return savedUnixTimestamp - currentUnixTimeStamp <  timeoutInSeconds; // true if < 1 Hour
+    private void getSunTimeFromDB()
+    {
+        int attempts = 0;
+        sunriseSunset = null;
+        while (sunriseSunset == null && attempts < NUM_OF_ATTEMPTS) {
+            sunriseSunset = weatherDataController.getSunTimesDataByLocation(loadWeatherActivity,
+                    locationInfo.getCountry(), locationInfo.getCity());
+            attempts++;
+            if(attempts == 5){
+                //TODO Error to user? or what actions should we do. maybe log num of attempts.
+            }
+        }
     }
 
 
-    private boolean isLocationProximate(Location savedDocation, float radiusInKm){
+    // Added functions, might be else where.
+    private boolean isDataUpdated(long savedUnixTimestamp, int timeoutInSeconds) {
+        Calendar cal = Calendar.getInstance();
+        TimeZone timeZone = cal.getTimeZone();
+        Date cals = Calendar.getInstance(TimeZone.getDefault()).getTime();
+        long milliseconds = cals.getTime();
+        milliseconds = milliseconds + timeZone.getOffset(milliseconds);
+        long currentUnixTimeStamp = milliseconds / 1000L;
+
+        return savedUnixTimestamp - currentUnixTimeStamp < timeoutInSeconds; // true if < 1 Hour
+    }
+
+
+    private boolean isLocationProximate(Location savedDocation, float radiusInKm) {
 
         double latitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLatitude());
         double longitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLongitude());
@@ -403,6 +433,6 @@ public class WeatherLoader {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double dist = EARTH_RADIUS * c;
-        return  dist < radiusInKm; // true if distance of saved data from current location < radiusInKm KM
+        return dist < radiusInKm; // true if distance of saved data from current location < radiusInKm KM
     }
 }
