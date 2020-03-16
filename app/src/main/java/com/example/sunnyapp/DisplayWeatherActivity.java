@@ -103,8 +103,11 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     public int getHourOfDayState() {
         long sunrise = DateStringConverter.stringToDate(sunriseSunset.getSunrise()).getTime();
         long sunset = DateStringConverter.stringToDate(sunriseSunset.getSunset()).getTime();
-        long currTime = Calendar.getInstance().getTimeInMillis();
+        long currTime = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
 
+        if (sunrise - currTime > (ONE_HOUR * 0.5)) {
+            return 5; // night
+        }
         if (Math.abs(sunrise - currTime) < (ONE_HOUR * 0.5)) {
             return 1; // sunrise time
         }
@@ -117,7 +120,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         if (currTime - sunset > (ONE_HOUR * 0.5)) {
             return 5; // night
         }
-        return 4; // midday
+        return 3; // midday
     }
 
     private void setBackground(Boolean withClouds){

@@ -295,7 +295,12 @@ public class WeatherLoader {
         protected Integer doInBackground(Integer... callers) {
 
             OkHttpClient client = new OkHttpClient();
-            Date currDateTime = Calendar.getInstance().getTime();
+
+//            uncomment this line to work with actual current time
+//            Date currDateTime = Calendar.getInstance().getTime();
+
+//            uncomment this line to work with example data
+            Date currDateTime = DateStringConverter.stringToDate("2020-02-29T06:07:00+02:00");
 
             // checking if current forecast and sunriseSunset are up to date. if not, try loading from firebase.
             if (!checkSunriseSunsetUpToDate(currDateTime)) {
@@ -312,7 +317,10 @@ public class WeatherLoader {
                 return null;
             }
 
+//            uncomment this line to work with real data from AccuWeather
 //            String locationKey = locationInfo.getLocationKey();
+
+//            uncomment this line to work with example data
             String locationKey = locationKeyExample;
 
 //            checking if firebase forecast and sunriseSunset are up to date. if not, try querying AccuWeather.
