@@ -1,5 +1,6 @@
-package com.example.sunnyapp;
+package com.example.sunnyapp.future_possible_features;
 
+import com.example.sunnyapp.FirebaseController;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 

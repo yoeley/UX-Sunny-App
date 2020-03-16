@@ -5,15 +5,15 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 
 // Most prob will delete seems unnecessary
-class FirebaseController {
+public class FirebaseController {
 
     private static final FirebaseController firebaseController = new FirebaseController();
 
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
-    FirebaseStorage storage;
+    public FirebaseAuth mAuth;
+    public FirebaseFirestore db;
+    public FirebaseStorage storage;
 
-    static FirebaseController getInstance() {
+    public static FirebaseController getInstance() {
         return firebaseController;
     }
 
