@@ -1,9 +1,5 @@
 package com.example.sunnyapp;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 
@@ -22,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.TimeZone;
 
 public class WeatherLoader {
 
@@ -42,7 +37,7 @@ public class WeatherLoader {
     private Location location = null;
 
     private static WeatherLoader weatherLoader = null;
-    private LoadWeatherActivity loadWeatherActivity;
+    private MainActivity mainActivity;
 
     private Forecast forecast;
     private SunriseSunset sunriseSunset;
@@ -68,8 +63,8 @@ public class WeatherLoader {
         new getWeatherTask().execute();
     }
 
-    public void setLoadWeatherActivity(LoadWeatherActivity loadWeatherActivity) {
-        this.loadWeatherActivity = loadWeatherActivity;
+    public void setMainActivity(MainActivity mainActivity) {
+        this.mainActivity = mainActivity;
     }
 
     public Location getLocation() {
@@ -320,12 +315,17 @@ public class WeatherLoader {
 //            String locationKey = locationInfo.getLocationKey();
             String locationKey = locationKeyExample;
 
-            // checking if firebase forecast and sunriseSunset are up to date. if not, try querying AccuWeather.
+//            checking if firebase forecast and sunriseSunset are up to date. if not, try querying AccuWeather.
             if (!checkSunriseSunsetUpToDate(currDateTime)) {
+//                uncomment this section to work with real data from AccuWeather
+                ////////////////////////////////////////////////////////////////////////////////////
 //                JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
 //                JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
 //                JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
+                ////////////////////////////////////////////////////////////////////////////////////
 
+//                uncomment this section to work with example data
+                ////////////////////////////////////////////////////////////////////////////////////
                 JSONArray forecastJSON = null;
                 JSONArray currConditionsJSON = null;
                 JSONObject daily5DaysJSON = null;
@@ -336,17 +336,23 @@ public class WeatherLoader {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                ////////////////////////////////////////////////////////////////////////////////////
 
                 forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
                 sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
-                weatherDataController.saveForecastDataByLocation(loadWeatherActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
-                weatherDataController.saveSunTimesDataByLocation(loadWeatherActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
+                weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
+                weatherDataController.saveSunTimesDataByLocation(mainActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
 
             }
             else if (!checkForecastUpToDate(currDateTime)) {
+//                uncomment this section to work with real data from AccuWeather
+                ////////////////////////////////////////////////////////////////////////////////////
 //                JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
 //                JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
+                ////////////////////////////////////////////////////////////////////////////////////
 
+//                uncomment this section to work with example data
+                ////////////////////////////////////////////////////////////////////////////////////
                 JSONArray forecastJSON = null;
                 JSONArray currConditionsJSON = null;
                 try {
@@ -355,9 +361,10 @@ public class WeatherLoader {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                ////////////////////////////////////////////////////////////////////////////////////
 
                 forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
-                weatherDataController.saveForecastDataByLocation(loadWeatherActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
+                weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
             }
             else {
                 // everything from firebase was already up to date - quit function
@@ -370,7 +377,7 @@ public class WeatherLoader {
         }
 
         protected void onPostExecute(Integer result) {
-            loadWeatherActivity.goToDisplayWeatherActivity();
+            mainActivity.goToDisplayWeatherActivity();
         }
 
         private final String locationKeyExample = "213225";
@@ -384,7 +391,7 @@ public class WeatherLoader {
         int attempts = 0;
         forecast = null;
         while (forecast == null && attempts < NUM_OF_ATTEMPTS) {
-            forecast = weatherDataController.getForecastDataByLocation(loadWeatherActivity,
+            forecast = weatherDataController.getForecastDataByLocation(mainActivity,
                     locationInfo.getCountry(), locationInfo.getCity());
             attempts++;
             if(attempts == 5){
@@ -398,41 +405,12 @@ public class WeatherLoader {
         int attempts = 0;
         sunriseSunset = null;
         while (sunriseSunset == null && attempts < NUM_OF_ATTEMPTS) {
-            sunriseSunset = weatherDataController.getSunTimesDataByLocation(loadWeatherActivity,
+            sunriseSunset = weatherDataController.getSunTimesDataByLocation(mainActivity,
                     locationInfo.getCountry(), locationInfo.getCity());
             attempts++;
             if(attempts == 5){
                 //TODO Error to user? or what actions should we do. maybe log num of attempts.
             }
         }
-    }
-
-
-    // Added functions, might be else where.
-    private boolean isDataUpdated(long savedUnixTimestamp, int timeoutInSeconds) {
-        Calendar cal = Calendar.getInstance();
-        TimeZone timeZone = cal.getTimeZone();
-        Date cals = Calendar.getInstance(TimeZone.getDefault()).getTime();
-        long milliseconds = cals.getTime();
-        milliseconds = milliseconds + timeZone.getOffset(milliseconds);
-        long currentUnixTimeStamp = milliseconds / 1000L;
-
-        return savedUnixTimestamp - currentUnixTimeStamp < timeoutInSeconds; // true if < 1 Hour
-    }
-
-
-    private boolean isLocationProximate(Location savedDocation, float radiusInKm) {
-
-        double latitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLatitude());
-        double longitudeDistance = Math.toRadians(location.getLatitude() - savedDocation.getLongitude());
-        double a = (Math.sin(latitudeDistance / 2) * Math.sin(latitudeDistance / 2)) +
-                (Math.cos(Math.toRadians(location.getLatitude()))) *
-                        (Math.cos(Math.toRadians(savedDocation.getLatitude()))) *
-                        (Math.sin(longitudeDistance / 2)) *
-                        (Math.sin(longitudeDistance / 2));
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double dist = EARTH_RADIUS * c;
-        return dist < radiusInKm; // true if distance of saved data from current location < radiusInKm KM
     }
 }

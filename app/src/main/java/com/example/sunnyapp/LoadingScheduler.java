@@ -9,7 +9,7 @@ public class LoadingScheduler extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent)
     {
-        Intent loadWeatherActivity = new Intent(context, LoadWeatherActivity.class);
+        Intent loadWeatherActivity = new Intent(context, MainActivity.class);
         context.startActivity(loadWeatherActivity);
     }
 }
