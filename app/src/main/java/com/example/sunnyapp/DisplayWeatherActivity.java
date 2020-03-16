@@ -93,7 +93,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     }
 
     private void extractCurrentWeather(){
-        int idIcon = 1; //TODO: get the icon id.
+        int idIcon = forecast.getWeatherIcon();
         if (cloudsIds.contains(idIcon)) { clouds = true; }
         if (rainIds.contains(idIcon)) { rain = true; }
         if (snowIds.contains(idIcon)) { snow = true; }
