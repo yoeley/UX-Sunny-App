@@ -57,6 +57,8 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     protected boolean snow = false;
     protected boolean lightning = false;
 
+    private final static long ONE_HOUR = 3600000; // in millis
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,9 +100,29 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         if (lightningIds.contains(idIcon)) { lightning = true; }
     }
 
+    public int getHourOfDayState() {
+        long sunrise = DateStringConverter.stringToDate(sunriseSunset.getSunrise()).getTime();
+        long sunset = DateStringConverter.stringToDate(sunriseSunset.getSunset()).getTime();
+        long currTime = Calendar.getInstance().getTimeInMillis();
+
+        if (Math.abs(sunrise - currTime) < (ONE_HOUR * 0.5)) {
+            return 1; // sunrise time
+        }
+        if (currTime - sunrise < (ONE_HOUR * 2) && currTime - sunrise > 0) {
+            return 1; // early morning
+        }
+        if (Math.abs(sunset - currTime) < (ONE_HOUR * 0.5)) {
+            return 4; // sunset time
+        }
+        if (currTime - sunset > (ONE_HOUR * 0.5)) {
+            return 5; // night
+        }
+        return 4; // midday
+    }
+
     private void setBackground(Boolean withClouds){
         View view = this.getWindow().getDecorView();
-        int hourOfDay = 6; // TODO: get the hour, and set the cases according the type of the
+        int hourOfDay = getHourOfDayState();
         // variable of the hour.
 
         //assume it's early morning. all other cases are taken care of in switch statement:
