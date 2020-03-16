@@ -229,7 +229,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         Calendar calender = Calendar.getInstance();
         calender.setTime(dateTime);
 
-        int startHour = calender.get(Calendar.HOUR);
+        int startHour = calender.get(Calendar.HOUR_OF_DAY);
         int startMinute = calender.get(Calendar.MINUTE);
 
         float startTime = startHour + startMinute / (float)60;
