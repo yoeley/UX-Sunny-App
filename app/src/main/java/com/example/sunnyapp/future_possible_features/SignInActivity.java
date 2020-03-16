@@ -1,7 +1,8 @@
-package com.example.sunnyapp;
+package com.example.sunnyapp.future_possible_features;
 
 import android.os.Bundle;
 
+import com.example.sunnyapp.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
