@@ -2,44 +2,198 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:scrolling_image_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorSky"
+    android:gravity="center|center_vertical"
+    android:orientation="vertical"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    android:screenOrientation="portrait"
     tools:context=".DisplayWeatherActivity">
 
-    <TextView
-        android:id="@+id/display"
+    <com.airbnb.lottie.LottieAnimationView
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:id="@+id/lightning"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/lightning" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:id="@+id/sun"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/sun2" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:id="@+id/moon"
+        android:visibility="invisible"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/moon2" />
+
+    <xyz.matteobattilana.library.WeatherView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/rain"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="-100dp"
+        android:layout_marginRight="-100dp"
+        android:visibility="invisible"
+        app:angle="30"
+        app:fadeOutTime="1500"
+        app:fps="100"
+        app:lifeTime="3000"
+        app:numParticles="100"
+        app:orientationMode="ENABLE"
+        app:startingWeather="RAIN" />
+
+    <xyz.matteobattilana.library.WeatherView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/snow"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="-100dp"
+        android:layout_marginRight="-100dp"
+        android:visibility="invisible"
+        app:angle="30"
+        app:fadeOutTime="1500"
+        app:fps="100"
+        app:lifeTime="3000"
+        app:numParticles="100"
+        app:orientationMode="ENABLE"
+        app:startingWeather="SNOW" />
+
+    <FrameLayout
+        android:id="@+id/foggy_clouds"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Put weather icon here"
-        android:textSize="40sp"
-        app:layout_constraintBottom_toTopOf="@+id/notification_button"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <ImageButton
-        android:id="@+id/notification_button"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:scaleType="fitXY"
+        <com.q42.android.scrollingimageview.ScrollingImageView
+            android:id="@+id/foggy_clouds_scrolling_foreground"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            scrolling_image_view:speed="1.5dp"
+            scrolling_image_view:src="@drawable/clouds_rain"/>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/day_clouds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/display"
-        app:layout_constraintBottom_toTopOf="@+id/chart"
-        app:srcCompat="@drawable/bell"
-        android:onClick="enableDisableNotification"
-        />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.q42.android.scrollingimageview.ScrollingImageView
+            android:id="@+id/day_clouds_scrolling_foreground"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            scrolling_image_view:speed="1.5dp"
+            scrolling_image_view:src="@drawable/clouds"/>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/morning_clouds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.q42.android.scrollingimageview.ScrollingImageView
+            android:id="@+id/morning_scrolling_background"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            scrolling_image_view:speed="0.5dp"
+            scrolling_image_view:src="@drawable/clouds_rain2" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/night_clouds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.q42.android.scrollingimageview.ScrollingImageView
+            android:id="@+id/night_clouds_scrolling_background"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            scrolling_image_view:speed="0.5dp"
+            scrolling_image_view:src="@drawable/clouds_night" />
+    </FrameLayout>
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/chart"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:layout_margin="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/notification_button"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintVertical_bias="0.8"
+        />
+
+    <ImageButton
+        android:id="@+id/notification_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chart"
+        android:background="@android:color/transparent"
+        app:srcCompat="@drawable/notification_on"
+        android:onClick="enableDisableNotification"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

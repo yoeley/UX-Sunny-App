@@ -13,26 +13,27 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IFillFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.utils.Utils;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+import java.util.Set;
+
+import xyz.matteobattilana.library.WeatherView;
+
 
 public class DisplayWeatherActivity extends AppCompatActivity {
 
@@ -46,6 +47,15 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     private WeatherLoader weatherLoader;
     private Forecast forecast;
     private SunriseSunset sunriseSunset;
+    protected final Set<Integer> cloudsIds = new HashSet<>(Arrays.asList(2,3,4,6,7,8,11,12,13,14,15
+            ,16,17,18,19,20,21,22,23,25,26,29,32,34,35,36,38,39,40,41,42,43,44));
+    protected final Set<Integer> rainIds = new HashSet<>(Arrays.asList(12,13,14,18,29,39,40));
+    protected final Set<Integer> snowIds = new HashSet<>(Arrays.asList(19,20,21,22,23,25,26,29,43,44));
+    protected final Set<Integer> lightningIds = new HashSet<>(Arrays.asList(15,16,17,41,42));
+    protected boolean clouds = false;
+    protected boolean rain = false;
+    protected boolean snow = false;
+    protected boolean lightning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +75,87 @@ public class DisplayWeatherActivity extends AppCompatActivity {
 
     private void setDisplay() {
         setDisplayChart();
+        setWeatherFeaturesOnActivity();
+    }
+
+    private void setWeatherFeaturesOnActivity(){
+        extractCurrentWeather();
+        setBackground(clouds);
+        if (rain) { setRain(); }
+        if (snow) { setSnow(); }
+        if (lightning) { setLightning(); }
+    }
+
+    private void extractCurrentWeather(){
+        int idIcon = 1; //TODO: get the icon id.
+        if (cloudsIds.contains(idIcon)) { clouds = true; }
+        if (rainIds.contains(idIcon)) { rain = true; }
+        if (snowIds.contains(idIcon)) { snow = true; }
+        if (lightningIds.contains(idIcon)) { lightning = true; }
+    }
+
+    private void setBackground(Boolean withClouds){
+        View view = this.getWindow().getDecorView();
+        int hourOfDay = 6; // TODO: get the hour, and set the cases according the type of the
+        // variable of the hour.
+
+        //assume it's early morning. all other cases are taken care of in switch statement:
+        Drawable background = ContextCompat.getDrawable(this, R.drawable.midday);
+        FrameLayout layout = (FrameLayout) findViewById(R.id.day_clouds);
+        switch (hourOfDay) {
+            case 1:
+                background = ContextCompat.getDrawable(this, R.drawable.sunrise);
+                layout = (FrameLayout)findViewById(R.id.foggy_clouds);
+                break;
+            case 2:
+                background = ContextCompat.getDrawable(this, R.drawable.early_morning);
+                layout = (FrameLayout)findViewById(R.id.morning_clouds);
+                break;
+            case 3:
+                background = ContextCompat.getDrawable(this, R.drawable.midday_cloudy);
+                layout = (FrameLayout)findViewById(R.id.foggy_clouds);
+                break;
+            case 4:
+                background = ContextCompat.getDrawable(this, R.drawable.sunset);
+                layout = (FrameLayout)findViewById(R.id.night_clouds);
+                setNight();
+                break;
+            case 5:
+                background = ContextCompat.getDrawable(this, R.drawable.night);
+                layout = (FrameLayout)findViewById(R.id.night_clouds);
+                setNight();
+                break;
+            default:
+                break;
+        }
+        view.setBackground(background);
+        if (withClouds) {
+            layout.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setRain(){
+        WeatherView mWeatherView = findViewById(R.id.rain);
+        mWeatherView.setVisibility(View.VISIBLE);
+        mWeatherView.startAnimation();
+    }
+
+    private void setSnow(){
+        WeatherView mWeatherView = findViewById(R.id.snow);
+        mWeatherView.setVisibility(View.VISIBLE);
+        mWeatherView.startAnimation();
+    }
+
+    private void setLightning(){
+        LottieAnimationView lightning = findViewById(R.id.lightning);
+        lightning.setVisibility(View.VISIBLE);
+    }
+
+    private void setNight(){
+        LottieAnimationView moon = findViewById(R.id.moon);
+        LottieAnimationView sun = findViewById(R.id.sun);
+        sun.setVisibility(View.INVISIBLE);
+        moon.setVisibility(View.VISIBLE);
     }
 
     private void setDisplayChart() {
@@ -86,7 +177,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.setPinchZoom(false);
         chart.setDrawGridBackground(false);
         chart.setHighlightPerDragEnabled(true);
-        chart.setViewPortOffsets(0f, 0f, 0f, 100f);
+        chart.setViewPortOffsets(35f, 5f, 35f, 50f);
         chart.getDescription().setEnabled(false);
         chart.setDrawGridBackground(false);
         chart.setMaxHighlightDistance(100);
@@ -102,8 +193,8 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         x.setLabelCount(6);
 
         x.setTextSize(12f);
-        x.setTextColor(Color.BLACK);
-        x.setCenterAxisLabels(true);
+        x.setTextColor(Color.WHITE);
+        x.setCenterAxisLabels(false);
         x.setGranularity(0.25f); // one hour
 
         // TODO: fix it so the first value is not written on the x axis (the first value is the current time, the only time that is not a round hour)
@@ -119,12 +210,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         YAxis y = chart.getAxisLeft();
         y.setTypeface(tfLight);
         y.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        //y.setAxisMinimum(-0.5f);
-        //y.setAxisMaximum(5.5f);
         y.setGranularityEnabled(true);
         y.setGranularity(0.2f);
         y.setDrawGridLines(false);
-        y.setTextColor(Color.BLACK);
     }
 
 
@@ -166,29 +254,14 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         // create a dataset and give it a type
         LineDataSet chartData = new LineDataSet(values, "chart_data");
 
-        chartData.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        chartData.setCubicIntensity(0.2f);
-        chartData.setDrawFilled(true);
-        chartData.setDrawCircles(false);
+        chartData.setMode(LineDataSet.Mode.LINEAR);
+        chartData.setLineWidth(1.75f);
+        chartData.setCircleRadius(5f);
+        chartData.setCircleHoleRadius(2.5f);
+        chartData.setColor(Color.YELLOW);
+        chartData.setCircleColor(Color.YELLOW);
+        chartData.setHighLightColor(Color.WHITE);
         chartData.setDrawValues(false);
-        chartData.setLineWidth(0f);
-        chartData.setHighLightColor(Color.TRANSPARENT);
-        chartData.setColor(Color.rgb(238, 230, 255));
-        chartData.setFillAlpha(70);
-        chartData.setDrawHorizontalHighlightIndicator(false);
-
-        if (Utils.getSDKInt() >= 18) {
-            // drawables only supported on api level 18 and above
-            Drawable drawable = ContextCompat.getDrawable(this, R.drawable.fade_chart);
-            chartData.setFillDrawable(drawable);
-        } else {
-            chartData.setFillFormatter(new IFillFormatter() {
-                @Override
-                public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
-                    return chart.getAxisLeft().getAxisMinimum();
-                }
-            });
-        }
 
         // create a data object with the data sets
         LineData data = new LineData(chartData);
@@ -205,7 +278,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.getAxisLeft().setEnabled(false);
         chart.getXAxis().setDrawAxisLine(false);
         chart.setBorderWidth(0f);
-        chart.animateXY(2000, 2000);
+        chart.animateX(2500);
         chart.getLegend().setEnabled(false);
         chart.setVisibleXRangeMaximum(8);
         chart.invalidate();
@@ -215,10 +288,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         notificationButton = findViewById(R.id.notification_button);
 
         if (isNotificationEnabled) {
-            notificationButton.setImageResource(R.drawable.bell);
+            notificationButton.setImageResource(R.drawable.notification_on);
         }
         else {
-            notificationButton.setImageResource(R.drawable.bell_silent);
+            notificationButton.setImageResource(R.drawable.notification_off);
         }
     }
 
