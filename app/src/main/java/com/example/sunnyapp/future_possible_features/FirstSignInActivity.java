@@ -1,4 +1,4 @@
-package com.example.sunnyapp;
+package com.example.sunnyapp.future_possible_features;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +12,8 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.sunnyapp.FirebaseController;
+import com.example.sunnyapp.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;

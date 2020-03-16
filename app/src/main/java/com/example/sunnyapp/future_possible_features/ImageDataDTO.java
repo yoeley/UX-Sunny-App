@@ -1,4 +1,4 @@
-package com.example.sunnyapp;
+package com.example.sunnyapp.future_possible_features;
 
 import com.google.firebase.Timestamp;
 

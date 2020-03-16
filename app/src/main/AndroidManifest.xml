@@ -16,11 +16,11 @@
         <activity android:name=".DisplayWeatherActivity"></activity>
         <activity android:name=".LoadWeatherActivity" />
         <activity
-            android:name=".ImageManagerActivity"
+            android:name=".future_possible_features.ImageManagerActivity"
             android:label="ImageManagerActivity"
             android:theme="@style/AppTheme.NoActionBar.NoActionBar" />
         <activity
-            android:name=".FirstSignInActivity"
+            android:name=".future_possible_features.FirstSignInActivity"
             android:label="@string/title_activity_first_sign_in"
             android:theme="@style/AppTheme.NoActionBar.NoActionBar" />
         <activity android:name=".MainActivity">
