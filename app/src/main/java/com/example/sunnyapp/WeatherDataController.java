@@ -44,7 +44,7 @@ public class WeatherDataController {
         db = firebaseController.db;
     }
 
-    public Forecast getForecastDataByLocation(String country, String city) {
+    public Forecast getForecastDataByLocation(Context context, String country, String city) {
         String locationPath = forecastDataPathBuilder(country, city);
         mDocRef = db.document(locationPath);
         getForecastThread = new CountDownLatch(1);
@@ -54,6 +54,8 @@ public class WeatherDataController {
                 if (documentSnapshot.exists()) {
                     forecast = documentSnapshot.toObject(Forecast.class);
                     Log.d("Forecast data:", "Document has been imported!");
+                    Toast.makeText(context, "Got forecast data from DB!",
+                            Toast.LENGTH_LONG).show();
                     getForecastThread.countDown();
 
                 } else {
@@ -74,7 +76,7 @@ public class WeatherDataController {
         else return null;
     }
 
-    public void saveForecastDataByLocation(Forecast forecast, String country, String city) {
+    public void saveForecastDataByLocation(Context context, Forecast forecast, String country, String city) {
         if (forecast != null) {
             String locationPath = forecastDataPathBuilder(country, city);
             mDocRef = db.document(locationPath);
@@ -84,6 +86,8 @@ public class WeatherDataController {
                         @Override
                         public void onSuccess(Void aVoid) {
                             Log.d("Forecast data:", "Document has been saved!");
+                            Toast.makeText(context, "Uploaded forecast data to DB!",
+                                    Toast.LENGTH_LONG).show();
 //                            saveForecastThread.countDown();
                         }
                     }).addOnFailureListener(new OnFailureListener() {
@@ -105,7 +109,7 @@ public class WeatherDataController {
     }
 
 
-    public SunriseSunset getSunTimesDataByLocation(String country, String city) {
+    public SunriseSunset getSunTimesDataByLocation(Context context, String country, String city) {
         String locationPath = sunTimeDataPathBuilder(country, city);
         mDocRef = db.document(locationPath);
         getSunTimeThread = new CountDownLatch(1);
@@ -115,6 +119,8 @@ public class WeatherDataController {
                 if (documentSnapshot.exists()) {
                     sunriseSunset = documentSnapshot.toObject(SunriseSunset.class);
                     Log.d("Weather data:", "Sunrise sunset Document has been imported!");
+                    Toast.makeText(context, "Got sun time data from DB!",
+                            Toast.LENGTH_LONG).show();
                     getSunTimeThread.countDown();
                 } else {
                     Log.d("Firestore fetch error:", "No such path to document.");
@@ -135,7 +141,7 @@ public class WeatherDataController {
         else return null;
     }
 
-    public void saveSunTimesDataByLocation(SunriseSunset sunriseSunset, String country, String city) {
+    public void saveSunTimesDataByLocation(Context context, SunriseSunset sunriseSunset, String country, String city) {
         if (sunriseSunset != null) {
             String locationPath = sunTimeDataPathBuilder(country, city);
 //            saveSuntimeThread = new CountDownLatch(1);
@@ -145,6 +151,8 @@ public class WeatherDataController {
                         @Override
                         public void onSuccess(Void aVoid) {
                             Log.d("SunTime data:", "Sunrise & set has been saved!");
+                            Toast.makeText(context, "Uploaded sun time data to DB!",
+                                    Toast.LENGTH_LONG).show();
 //                            saveSuntimeThread.countDown();
                         }
                     }).addOnFailureListener(new OnFailureListener() {
