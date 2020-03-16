@@ -38,7 +38,7 @@ public class PickWeatherNotificationScheduler extends BroadcastReceiver
         createNotificationChannel(context);
 
         // Create an explicit intent for an Activity in your app
-        Intent newIntent = new Intent(context, LoadWeatherActivity.class);
+        Intent newIntent = new Intent(context, MainActivity.class);
         newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, newIntent, 0);
 

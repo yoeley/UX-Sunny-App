@@ -224,14 +224,15 @@ public class DisplayWeatherActivity extends AppCompatActivity {
 
     public void enableDisableNotification(View view) {
         if (isNotificationEnabled) {
-            FileManager.writeToFile("No", "shouldSetNotification.txt", this);
+            FileManager.writeToFile("No\n", "shouldSetNotification.txt", this);
             isNotificationEnabled = false;
         }
         else {
-            FileManager.writeToFile("Yes", "shouldSetNotification.txt", this);
+            FileManager.writeToFile("Yes\n", "shouldSetNotification.txt", this);
             isNotificationEnabled = true;
         }
         setNotificationButton();
+        setNotification();
     }
 
     private void setPickWeatherNotificationScheduler(long pickWeatherTimeMillis) {
@@ -250,7 +251,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
 
     private Boolean checkNotificationsEnabled() {
         String shouldSetNotification = FileManager.readFromFile(getApplicationContext(), "shouldSetNotification.txt");
-        if (shouldSetNotification.equals("Yes") || shouldSetNotification.equals("")) {
+        if (shouldSetNotification.equals("Yes\n") || shouldSetNotification.equals("")) {
             return true;
         }
         else {
