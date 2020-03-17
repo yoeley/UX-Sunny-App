@@ -300,7 +300,7 @@ public class WeatherLoader {
 //            Date currDateTime = Calendar.getInstance().getTime();
 
 //            uncomment this line to work with example data
-            Date currDateTime = DateStringConverter.stringToDate("2020-02-29T06:07:00+02:00");
+            Date currDateTime = DateStringConverter.stringToDate("2020-03-17T11:50:00+02:00");
 
             // checking if current forecast and sunriseSunset are up to date. if not, try loading from firebase.
             if (!checkSunriseSunsetUpToDate(currDateTime)) {

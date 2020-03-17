@@ -24,9 +24,6 @@ public class Forecast implements Serializable {
     @JsonProperty("weatherIcon")
     private Integer weatherIcon;
 
-    @JsonProperty("currCondition")
-    private Double currCondition;
-
     @JsonProperty("foreCast")
     private ArrayList<Double> foreCast;
 
@@ -34,13 +31,12 @@ public class Forecast implements Serializable {
     }
 
     public Forecast(Double latitude, Double longitude, String locationKey, String dateTime, Integer weatherIcon,
-                    Double currCondition, ArrayList<Double> foreCast) {
+                    ArrayList<Double> foreCast) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.locationKey = locationKey;
         this.dateTime = dateTime;
         this.weatherIcon = weatherIcon;
-        this.currCondition = currCondition;
         this.foreCast = foreCast;
     }
 
@@ -79,14 +75,6 @@ public class Forecast implements Serializable {
     public Integer getWeatherIcon() { return weatherIcon; }
 
     public void setWeatherIcon(Integer weatherIcon) { this.weatherIcon = weatherIcon; }
-
-    public Double getCurrCondition() {
-        return currCondition;
-    }
-
-    public void setCurrCondition(Double currCondition) {
-        this.currCondition = currCondition;
-    }
 
     public ArrayList<Double> getForeCast() {
         return foreCast;

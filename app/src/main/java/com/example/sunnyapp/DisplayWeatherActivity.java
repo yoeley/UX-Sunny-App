@@ -265,12 +265,12 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         ArrayList<Entry> values = new ArrayList<>();
         ArrayList<Double> forcast12Hours = forecast.getForeCast();
 
-        values.add(new Entry(startTime, forecast.getCurrCondition().floatValue()));
+        values.add(new Entry(startTime, forcast12Hours.get(0).floatValue()));
 
         // update values array
-        for (int hour = 0; hour < 12; ++hour) {
+        for (int hour = 1; hour < forcast12Hours.size(); ++hour) {
             Log.d("x value:", Float.toString(hour));
-            values.add(new Entry(startHour + 1 + hour, forcast12Hours.get(hour).floatValue())); // add one entry per hour
+            values.add(new Entry(startHour + hour, forcast12Hours.get(hour).floatValue())); // add one entry per hour
         }
         return values;
     }
