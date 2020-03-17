@@ -25,6 +25,7 @@ public class ForecastGenerator {
     private static final Double bestRain = 0.0; // to be reevaluated in the future
     private static final Double bestSnow = 0.0; // to be reevaluated in the future
     private static final Double bestIce = 0.0; // to be reevaluated in the future
+    private static final Double bestPercip1Hour = 0.0; // to be reevaluated in the future
     private static final Double bestUVIndex = 2.0; // out of 10
     private static final Double bestCloudCover = 20.0; // out of 100
 
@@ -37,8 +38,7 @@ public class ForecastGenerator {
         forecast.setDateTime(DateStringConverter.dateToString(currDateTime));
 
         forecast.setWeatherIcon(weatherIcon(currConditionsJSON));
-        forecast.setCurrCondition(currConditionSunnyFactor(currConditionsJSON));
-        forecast.setForeCast(forecastSunnyFactor(forecastJSON));
+        forecast.setForeCast(forecastSunnyFactor(forecastJSON, currConditionsJSON));
         return forecast;
     }
 
@@ -52,7 +52,7 @@ public class ForecastGenerator {
         return weatherIcon;
     }
 
-    private static Double sunnyFactor(JSONObject forecastOneHour) {
+    private static Double forecastSunnyFactor(JSONObject forecastOneHour) {
         try {
             Double realFeelTemperature = forecastOneHour.getJSONObject("RealFeelTemperature").getDouble("Value");
             Double windSpeed = forecastOneHour.getJSONObject("Wind").getJSONObject("Speed").getDouble("Value");
@@ -80,21 +80,38 @@ public class ForecastGenerator {
         return 0.0;
     }
 
-    private static Double currConditionSunnyFactor(JSONArray currConditionsJSON) {
+    private static Double currConditionsSunnyFactor(JSONObject forecastOneHour) {
         try {
-           return currConditionsJSON.getJSONObject(0).getJSONObject("RealFeelTemperature").getJSONObject("Metric").getDouble("Value");
+            Double realFeelTemperature = forecastOneHour.getJSONObject("RealFeelTemperature").getJSONObject("Metric").getDouble("Value");
+            Double windSpeed = forecastOneHour.getJSONObject("Wind").getJSONObject("Speed").getJSONObject("Metric").getDouble("Value");
+            Double windDirection = forecastOneHour.getJSONObject("Wind").getJSONObject("Direction").getDouble("Degrees");
+            Double windGust = forecastOneHour.getJSONObject("WindGust").getJSONObject("Speed").getJSONObject("Metric").getDouble("Value");
+            Double percip1Hour = forecastOneHour.getJSONObject("Precip1hr").getJSONObject("Metric").getDouble("Value");
+            Double UVIndex = forecastOneHour.getDouble("UVIndex");
+            Double cloudCover = forecastOneHour.getDouble("CloudCover");
+
+            // temporary formula for the sunny factor. this formula is to be reevaluated when we gather more data from users
+            Double sunnyFactor = 100
+                    - Math.abs(bestRealFeelTemperature - realFeelTemperature)
+                    - Math.log(Math.abs(bestWindSpeed - windSpeed) + 1)
+                    - Math.log(Math.abs(bestPercip1Hour - percip1Hour) + 1)
+                    - Math.abs(bestUVIndex - UVIndex)
+                    - Math.log(Math.abs(bestCloudCover - cloudCover) + 1);
+
+            return sunnyFactor;
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return null;
+        return 0.0;
     }
 
-    private static ArrayList<Double> forecastSunnyFactor(JSONArray forecastJSON) {
+    private static ArrayList<Double> forecastSunnyFactor(JSONArray forecastJSON, JSONArray currConditionsJSON) {
         ArrayList<Double> forecastSunnyFactor = new ArrayList<Double>();
 
         try {
+            forecastSunnyFactor.add(currConditionsSunnyFactor(currConditionsJSON.getJSONObject(0)));
             for (int i = 0; i < forecastJSON.length(); ++i) {
-                forecastSunnyFactor.add(sunnyFactor(forecastJSON.getJSONObject(i)));
+                forecastSunnyFactor.add(forecastSunnyFactor(forecastJSON.getJSONObject(i)));
             }
         } catch (JSONException e) {
             e.printStackTrace();
