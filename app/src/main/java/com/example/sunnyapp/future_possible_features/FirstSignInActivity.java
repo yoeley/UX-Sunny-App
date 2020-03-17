@@ -12,7 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.sunnyapp.FirebaseController;
+import com.example.sunnyapp.FireBaseController;
 import com.example.sunnyapp.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -56,7 +56,7 @@ public class FirstSignInActivity extends AppCompatActivity{
         loginText = findViewById(R.id.firebase_text);
         loginImage = findViewById(R.id.firebase_icon);
         progressBar = findViewById(R.id.progress_circular);
-        mAuth = FirebaseController.getInstance().mAuth;
+        mAuth = FireBaseController.getInstance().auth;
     }
 
     void signInGoogle(){

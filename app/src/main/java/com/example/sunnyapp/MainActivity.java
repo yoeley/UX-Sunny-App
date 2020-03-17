@@ -30,7 +30,7 @@ import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int PERMISSION_ID = 44;
+    private final int PERMISSION_ID = 44;
     private FusedLocationProviderClient fusedLocationClient;
     private WeatherLoader weatherLoader;
     private Location location;
@@ -139,15 +139,15 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void requestNewLocationData() {
 
-        LocationRequest mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(0);
-        mLocationRequest.setFastestInterval(0);
-        mLocationRequest.setNumUpdates(1);
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(0);
+        locationRequest.setFastestInterval(0);
+        locationRequest.setNumUpdates(1);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         fusedLocationClient.requestLocationUpdates(
-                mLocationRequest, mLocationCallback,
+                locationRequest, mLocationCallback,
                 Looper.myLooper()
         );
 

@@ -41,7 +41,6 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     protected Typeface tfRegular;
     protected Typeface tfLight;
 
-    private ImageButton notificationButton;
     private Boolean isNotificationEnabled;
 
     private WeatherLoader weatherLoader;
@@ -163,15 +162,15 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     }
 
     private void setRain(){
-        WeatherView mWeatherView = findViewById(R.id.rain);
-        mWeatherView.setVisibility(View.VISIBLE);
-        mWeatherView.startAnimation();
+        WeatherView weatherView = findViewById(R.id.rain);
+        weatherView.setVisibility(View.VISIBLE);
+        weatherView.startAnimation();
     }
 
     private void setSnow(){
-        WeatherView mWeatherView = findViewById(R.id.snow);
-        mWeatherView.setVisibility(View.VISIBLE);
-        mWeatherView.startAnimation();
+        WeatherView weatherView = findViewById(R.id.snow);
+        weatherView.setVisibility(View.VISIBLE);
+        weatherView.startAnimation();
     }
 
     private void setLightning(){
@@ -313,7 +312,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     }
 
     private void setNotificationButton() {
-        notificationButton = findViewById(R.id.notification_button);
+        ImageButton notificationButton = findViewById(R.id.notification_button);
 
         if (isNotificationEnabled) {
             notificationButton.setImageResource(R.drawable.notification_on);

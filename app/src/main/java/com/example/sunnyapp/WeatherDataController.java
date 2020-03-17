@@ -2,7 +2,6 @@ package com.example.sunnyapp;
 
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -20,15 +19,13 @@ public class WeatherDataController {
 
     private static final WeatherDataController ourInstance = new WeatherDataController();
 
-    private FirebaseController firebaseController;
     private FirebaseFirestore db;
-    private DocumentReference mDocRef;
+    private DocumentReference docRef;
     private Forecast forecast = null;
     private SunriseSunset sunriseSunset = null;
-    public CountDownLatch getForecastThread;
-//    private CountDownLatch saveForecastThread;
-    public CountDownLatch getSunTimeThread;
-//    private CountDownLatch saveSuntimeThread;
+    private CountDownLatch getForecastThread;
+    private CountDownLatch getSunTimeThread;
+
     private final String BASE_PATH = "weather_by_loc/Countries/";
     private final String DATA_TYPE_PATH = "data_type/";
     private final String FORECAST_PATH = "forecast_data";
@@ -40,30 +37,29 @@ public class WeatherDataController {
     }
 
     private WeatherDataController() {
-        firebaseController = FirebaseController.getInstance();
-        db = firebaseController.db;
+        FireBaseController firebaseController = FireBaseController.getInstance();
+        db = firebaseController.dB;
     }
 
     public Forecast getForecastDataByLocation(Context context, String country, String city) {
         String locationPath = forecastDataPathBuilder(country, city);
-        mDocRef = db.document(locationPath);
+        docRef = db.document(locationPath);
         getForecastThread = new CountDownLatch(1);
-        mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if (documentSnapshot.exists()) {
                     forecast = documentSnapshot.toObject(Forecast.class);
                     Log.d("Forecast data:", "Document has been imported!");
-                    Toast.makeText(context, "Got forecast data from DB!",
-                            Toast.LENGTH_LONG).show();
                     getForecastThread.countDown();
 
                 } else {
-                    Log.d("Firestore fetch error:", "No such path to document.");
+                    Log.d("FireStore fetch error:", "No such path to document.");
                     getForecastThread.countDown();
                 }
             }
         });
+        // Await timeout for call (thread wise).
         try {
             getForecastThread.await(WAIT_TIME_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
@@ -76,19 +72,16 @@ public class WeatherDataController {
         else return null;
     }
 
-    public void saveForecastDataByLocation(Context context, Forecast forecast, String country, String city) {
+    public void saveForecastDataByLocation(Context context, Forecast forecast, String country,
+                                           String city) {
         if (forecast != null) {
             String locationPath = forecastDataPathBuilder(country, city);
-            mDocRef = db.document(locationPath);
-//            saveForecastThread = new CountDownLatch(1);
-            mDocRef.set(forecast, SetOptions.merge())
+            docRef = db.document(locationPath);
+            docRef.set(forecast, SetOptions.merge())
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
                             Log.d("Forecast data:", "Document has been saved!");
-                            Toast.makeText(context, "Uploaded forecast data to DB!",
-                                    Toast.LENGTH_LONG).show();
-//                            saveForecastThread.countDown();
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -101,26 +94,19 @@ public class WeatherDataController {
             Log.d("Forecast data:", "Failure: Document has not been saved! - " +
                     "received null data.");
         }
-//        try {
-//            saveForecastThread.await(WAIT_TIME_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
 
     public SunriseSunset getSunTimesDataByLocation(Context context, String country, String city) {
         String locationPath = sunTimeDataPathBuilder(country, city);
-        mDocRef = db.document(locationPath);
+        docRef = db.document(locationPath);
         getSunTimeThread = new CountDownLatch(1);
-        mDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if (documentSnapshot.exists()) {
                     sunriseSunset = documentSnapshot.toObject(SunriseSunset.class);
                     Log.d("Weather data:", "Sunrise sunset Document has been imported!");
-                    Toast.makeText(context, "Got sun time data from DB!",
-                            Toast.LENGTH_LONG).show();
                     getSunTimeThread.countDown();
                 } else {
                     Log.d("Firestore fetch error:", "No such path to document.");
@@ -144,16 +130,12 @@ public class WeatherDataController {
     public void saveSunTimesDataByLocation(Context context, SunriseSunset sunriseSunset, String country, String city) {
         if (sunriseSunset != null) {
             String locationPath = sunTimeDataPathBuilder(country, city);
-//            saveSuntimeThread = new CountDownLatch(1);
-            mDocRef = db.document(locationPath);
-            mDocRef.set(sunriseSunset, SetOptions.merge())
+            docRef = db.document(locationPath);
+            docRef.set(sunriseSunset, SetOptions.merge())
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
                             Log.d("SunTime data:", "Sunrise & set has been saved!");
-                            Toast.makeText(context, "Uploaded sun time data to DB!",
-                                    Toast.LENGTH_LONG).show();
-//                            saveSuntimeThread.countDown();
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -162,11 +144,6 @@ public class WeatherDataController {
                 }
             });
         }
-//        try {
-//            saveSuntimeThread.await(WAIT_TIME_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
 

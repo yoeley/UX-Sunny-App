@@ -65,15 +65,14 @@ public class ForecastGenerator {
             Double cloudCover = forecastOneHour.getDouble("CloudCover");
 
             // temporary formula for the sunny factor. this formula is to be reevaluated when we gather more data from users
-            Double sunnyFactor = 100
+            return  (100
                     - Math.abs(bestRealFeelTemperature - realFeelTemperature)
                     - Math.log(Math.abs(bestWindSpeed - windSpeed) + 1)
                     - Math.log(Math.abs(bestRain - rain) + 1)
                     - Math.log(Math.abs(bestSnow - snow) + 1)
                     - Math.abs(bestUVIndex - UVIndex)
-                    - Math.log(Math.abs(bestCloudCover - cloudCover) + 1);
+                    - Math.log(Math.abs(bestCloudCover - cloudCover) + 1));
 
-            return sunnyFactor;
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -91,14 +90,13 @@ public class ForecastGenerator {
             Double cloudCover = forecastOneHour.getDouble("CloudCover");
 
             // temporary formula for the sunny factor. this formula is to be reevaluated when we gather more data from users
-            Double sunnyFactor = 100
+            return  (100
                     - Math.abs(bestRealFeelTemperature - realFeelTemperature)
                     - Math.log(Math.abs(bestWindSpeed - windSpeed) + 1)
                     - Math.log(Math.abs(bestPercip1Hour - percip1Hour) + 1)
                     - Math.abs(bestUVIndex - UVIndex)
-                    - Math.log(Math.abs(bestCloudCover - cloudCover) + 1);
+                    - Math.log(Math.abs(bestCloudCover - cloudCover) + 1));
 
-            return sunnyFactor;
         } catch (JSONException e) {
             e.printStackTrace();
         }
