@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.github.mikephil.charting.charts.LineChart;
@@ -326,6 +327,8 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         if (isNotificationEnabled) {
             FileManager.writeToFile("No\n", "shouldSetNotification.txt", this);
             isNotificationEnabled = false;
+            Toast.makeText(this, "Break-time notifications off",
+                    Toast.LENGTH_SHORT).show();
         }
         else {
             FileManager.writeToFile("Yes\n", "shouldSetNotification.txt", this);
