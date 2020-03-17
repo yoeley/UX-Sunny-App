@@ -29,19 +29,33 @@ public class WeatherDataController {
     private final String BASE_PATH = "weather_by_loc/Countries/";
     private final String DATA_TYPE_PATH = "data_type/";
     private final String FORECAST_PATH = "forecast_data";
-    private final String SUNTIME_PATH = "sun_time_data";
+    private final String SUN_TIME_PATH = "sun_time_data";
     private final int WAIT_TIME_IN_MILLISECONDS = 3000;
 
-    public static WeatherDataController getInstance() {
+    /**
+     * Singleton of the WeatherDataController instance
+     * @return The WeatherDataController instance
+     */
+    static WeatherDataController getInstance() {
         return ourInstance;
     }
 
+    /**
+     * Constructor for the WeatherDataController instance (a singleton)
+     */
     private WeatherDataController() {
         FireBaseController firebaseController = FireBaseController.getInstance();
         db = firebaseController.dB;
     }
 
-    public Forecast getForecastDataByLocation(Context context, String country, String city) {
+    /**
+     * Retrieves the forecast from the FireStore data base for the given location if exists.
+     * @param context - The current app context.
+     * @param country - The country's data we want to get - part of the path for the "query".
+     * @param city - The city's data we want to get.
+     * @return A Forecast object that it's fields hold the data received from the database.
+     */
+    Forecast getForecastDataByLocation(Context context, String country, String city) {
         String locationPath = forecastDataPathBuilder(country, city);
         docRef = db.document(locationPath);
         getForecastThread = new CountDownLatch(1);
@@ -72,6 +86,13 @@ public class WeatherDataController {
         else return null;
     }
 
+    /**
+     * Uploads the given data to the FireStore data base in the given path (by location).
+     * @param context - The current app context.
+     * @param forecast - The forecast object, that its data & fields we want to upload.
+     * @param country - The country's data we want to get - part of the path for the "query".
+     * @param city - The city's data we want to get.
+     */
     public void saveForecastDataByLocation(Context context, Forecast forecast, String country,
                                            String city) {
         if (forecast != null) {
@@ -97,6 +118,13 @@ public class WeatherDataController {
     }
 
 
+    /**
+     * Retrieves the sun rise & sun set from the FireStore data base for the given location if exists.
+     * @param context - The current app context.
+     * @param country - The country's data we want to get - part of the path for the "query".
+     * @param city - The city's data we want to get.
+     * @return A SunriseSunset object that it's fields hold the data received from the database.
+     */
     public SunriseSunset getSunTimesDataByLocation(Context context, String country, String city) {
         String locationPath = sunTimeDataPathBuilder(country, city);
         docRef = db.document(locationPath);
@@ -127,6 +155,13 @@ public class WeatherDataController {
         else return null;
     }
 
+    /**
+     * Uploads the given data to the FireStore data base in the given path (by location).
+     * @param context - The current app context.
+     * @param sunriseSunset - The SunriseSunset object, that its data & fields we want to upload.
+     * @param country - The country's data we want to get - part of the path for the "query".
+     * @param city - The city's data we want to get.
+     */
     public void saveSunTimesDataByLocation(Context context, SunriseSunset sunriseSunset, String country, String city) {
         if (sunriseSunset != null) {
             String locationPath = sunTimeDataPathBuilder(country, city);
@@ -147,12 +182,26 @@ public class WeatherDataController {
     }
 
 
+    /**
+     *
+     * @param country  - The given country
+     * @param city - The given city
+     * @return A String that is a data base constructed path for storing the data for the Forecast
+     * object.
+     */
     public String forecastDataPathBuilder(String country, String city) {
         return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + FORECAST_PATH;
     }
 
+    /**
+     *
+     * @param country  - The given country
+     * @param city - The given city
+     * @return A String that is a data base constructed path for storing the data for the
+     * SunriseSunset object.
+     */
     public String sunTimeDataPathBuilder(String country, String city) {
-        return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + SUNTIME_PATH;
+        return BASE_PATH + country + "/" + city + "/" + DATA_TYPE_PATH + SUN_TIME_PATH;
     }
 
 }
