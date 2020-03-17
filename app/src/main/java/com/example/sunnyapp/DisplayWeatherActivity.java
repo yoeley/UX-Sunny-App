@@ -333,6 +333,8 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         else {
             FileManager.writeToFile("Yes\n", "shouldSetNotification.txt", this);
             isNotificationEnabled = true;
+            // No toast when switching notifications back on. this is the default state of the app,
+            // the user can only return to it if they already canceled notification, which means they know the deal
         }
         setNotificationButton();
         setNotification();
