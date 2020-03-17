@@ -1,6 +1,6 @@
 package com.example.sunnyapp.future_possible_features;
 
-import com.example.sunnyapp.FirebaseController;
+import com.example.sunnyapp.FireBaseController;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -10,7 +10,7 @@ public class ImageFlowController {
 
     private String mName;
     private String mImageUrl;
-    private FirebaseController firebaseController;
+    private FireBaseController firebaseController;
     protected FirebaseStorage storage;
     protected StorageReference storageReference;
 
@@ -19,7 +19,7 @@ public class ImageFlowController {
     }
 
     public ImageFlowController() {
-        firebaseController = FirebaseController.getInstance();
+        firebaseController = FireBaseController.getInstance();
         storage = firebaseController.storage;
         storageReference = storage.getReference("uploads");
     }

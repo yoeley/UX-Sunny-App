@@ -1,9 +1,10 @@
-package com.example.sunnyapp;
+package com.example.sunnyapp.future_possible_features;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.widget.Toast;
 
+import com.example.sunnyapp.WeatherLoader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.JSONException;
