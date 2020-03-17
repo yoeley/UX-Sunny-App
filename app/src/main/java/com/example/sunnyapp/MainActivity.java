@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     private int PERMISSION_ID = 44;
     private FusedLocationProviderClient fusedLocationClient;
     private WeatherLoader weatherLoader;
-    private TextView logo;
     private Location location;
     private MainActivity mainActivity;
     private LocationListenerGPS locationListenerGPS;
@@ -43,14 +42,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        logo = findViewById(R.id.logo);
         weatherLoader = WeatherLoader.getInstance();
         locationListenerGPS = new LocationListenerGPS();
         mainActivity = this;
         isFirstDisplay = true;
-
         getLastLocation();
     }
 
