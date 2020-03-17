@@ -28,6 +28,10 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.Calendar;
 
+/**
+ * The first activity of the app.
+ * this is a loading screen with no interaction with the user.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private final int PERMISSION_ID = 44;
@@ -62,57 +66,64 @@ public class MainActivity extends AppCompatActivity {
                         new OnCompleteListener<Location>() {
                             @Override
                             public void onComplete(@NonNull Task<Location> task) {
-                                location = task.getResult();
-                                setGetLastLocationAgain();
-                                if (location == null) {
-                                    requestNewLocationData();
-                                } else {
-                                    checkIsOutdoors();
-                                    loadWeather();
-                                }
+                                loadWeatherForLoaction(task);
                             }
                         }
                 );
             } else {
-                Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(intent);
+                promptTurnOnLocation();
             }
         } else {
             requestPermissions();
         }
     }
 
+    private void loadWeatherForLoaction(@NonNull Task<Location> task) {
+        location = task.getResult();
+        setGetLastLocationAgain();
+        if (location == null) {
+            requestNewLocationData();
+        } else {
+            checkIsOutdoors();
+            loadWeather();
+        }
+    }
+
+    private void promptTurnOnLocation() {
+        Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivity(intent);
+    }
+
+    @SuppressLint("MissingPermission")
     private void checkIsOutdoors() {
-        // if last fix on location happend more then 5 seconds ago, user is inside.
+        // if last fix on location happened more then 7 seconds ago, user is inside.
         // using LocationManager for this one instead of fusedLocationClient because
         // fusedLocationClient seems to give the time of a fixed location from any source,
-        // while LocationManager gives the reqired time of the fix - that of the GPS fix
+        // while LocationManager gives the required time of the fix - that of the GPS fix
         LocationManager locationManager = (LocationManager) getBaseContext().getSystemService(LOCATION_SERVICE);
-        try {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 200, 0, locationListenerGPS);
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 200, 0, locationListenerGPS);
+
 
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                Location currLocation = null;
-                try {
-                    currLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                } catch (SecurityException e) {
-                    e.printStackTrace();
-                }
-
-                if (Calendar.getInstance().getTime().getTime() - currLocation.getTime() > 5000) {
-                    uploadIsOutdoors(false);
-                } else {
-                    uploadIsOutdoors(true);
-                }
-                locationManager.removeUpdates(locationListenerGPS);
+                getUpdatedGPSLocation(locationManager);
             }
         }, 10000);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void getUpdatedGPSLocation(LocationManager locationManager) {
+        Location currLocation = null;
+        currLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        if (Calendar.getInstance().getTime().getTime() - currLocation.getTime() > 7000) {
+            uploadIsOutdoors(false);
+        } else {
+            uploadIsOutdoors(true);
+        }
+        locationManager.removeUpdates(locationListenerGPS);
     }
 
     private void loadWeather() {
@@ -193,14 +204,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-//    @Override
-//    public void onResume(){
-//        super.onResume();
-//        if (checkPermissions()) {
-//            getLastLocation();
-//        }
-//    }
 
     private void setGetLastLocationAgain() {
         Handler handler = new Handler();
