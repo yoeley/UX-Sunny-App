@@ -101,107 +101,49 @@ public class WeatherLoader {
 
     private class getWeatherTask extends AsyncTask<Integer, Integer, Integer> {
 
-        private String obtainLocationKey(OkHttpClient client) {
+        private String obtainLocationKey(OkHttpClient client) throws JSONException, IOException {
             Request keyRequest = new Request.Builder()
                     .url(String.format(keyRequestBodyFormat, apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
                     .build();
 
-            Response keyResponse = null;
-            String keyResult = null;
-            JSONObject keyResultJSON = null;
-            String locationKey = null;
-            try {
-                keyResponse = client.newCall(keyRequest).execute();
-                keyResult = keyResponse.body().string();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Response keyResponse = client.newCall(keyRequest).execute();
+            String keyResult = keyResponse.body().string();
 
-            if (keyResult != null) {
-                try {
-                    keyResultJSON = new JSONObject(keyResult);
-                    locationKey = keyResultJSON.getString("Key");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return locationKey;
+            JSONObject keyResultJSON = new JSONObject(keyResult);
+            return keyResultJSON.getString("Key");
         }
 
-        private JSONArray obtainWeatherForecastJSON(OkHttpClient client, String locationKey) {
+        private JSONArray obtainWeatherForecastJSON(OkHttpClient client, String locationKey) throws IOException, JSONException {
             Request weatherRrequest = new Request.Builder()
                     .url(String.format(weatherRequestBodyFormat, locationKey, apiKey))
                     .build();
 
-            Response weatherResponse = null;
-            String weatherResult = null;
-            JSONArray weatherResultJSON = null;
-            try {
-                weatherResponse = client.newCall(weatherRrequest).execute();
-                weatherResult = weatherResponse.body().string();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Response weatherResponse = client.newCall(weatherRrequest).execute();
+            String weatherResult = weatherResponse.body().string();
 
-            if (weatherResult != null) {
-                try {
-                    weatherResultJSON = new JSONArray(weatherResult);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            return weatherResultJSON;
+            return new JSONArray(weatherResult);
         }
 
-        private JSONArray obtainCurrConditions(OkHttpClient client, String locationKey) {
+        private JSONArray obtainCurrConditions(OkHttpClient client, String locationKey) throws IOException, JSONException {
             Request currConditionsRrequest = new Request.Builder()
                     .url(String.format(currConditionsRequestBodyFormat, locationKey, apiKey))
                     .build();
 
-            Response currConditionsResponse = null;
-            String currConditionsResult = null;
-            JSONArray currConditionsJSON = null;
-            try {
-                currConditionsResponse = client.newCall(currConditionsRrequest).execute();
-                currConditionsResult = currConditionsResponse.body().string();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Response currConditionsResponse = client.newCall(currConditionsRrequest).execute();
+            String currConditionsResult = currConditionsResponse.body().string();
 
-            if (currConditionsResult != null) {
-                try {
-                    currConditionsJSON = new JSONArray(currConditionsResult);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            return currConditionsJSON;
+            return new JSONArray(currConditionsResult);
         }
 
-        private JSONObject obtainDaily5DayForecast(OkHttpClient client, String locationKey) {
+        private JSONObject obtainDaily5DayForecast(OkHttpClient client, String locationKey) throws IOException, JSONException {
             Request daily5DaysRrequest = new Request.Builder()
                     .url(String.format(daily5DaysRequestBodyFormat, locationKey, apiKey))
                     .build();
 
-            Response daily5DaysResponse = null;
-            String daily5DaysResult = null;
-            JSONObject daily5DaysJSON = null;
-            try {
-                daily5DaysResponse = client.newCall(daily5DaysRrequest).execute();
-                daily5DaysResult = daily5DaysResponse.body().string();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Response daily5DaysResponse = client.newCall(daily5DaysRrequest).execute();
+            String daily5DaysResult = daily5DaysResponse.body().string();
 
-            if (daily5DaysResult != null) {
-                try {
-                    daily5DaysJSON = new JSONObject(daily5DaysResult);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            return daily5DaysJSON;
+            return new JSONObject(daily5DaysResult);
         }
 
         private Boolean checkLocationUpToDate(Double formerLatitude, Double formerLongitude) {
@@ -209,24 +151,12 @@ public class WeatherLoader {
             Double longitude = location.getLongitude();
 
             float results[] = new float[1];
-            try {
-                Location.distanceBetween(formerLatitude, formerLongitude, latitude, longitude, results);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            }
+            Location.distanceBetween(formerLatitude, formerLongitude, latitude, longitude, results);
 
             return !(results[0] > 1000);
         }
 
-        private Boolean checkSunriseSunsetUpToDate(Date currDateTime) {
-            if (sunriseSunset == null) {
-                return false;
-            }
-
-            if (!checkLocationUpToDate(sunriseSunset.getLatitude(), sunriseSunset.getLongitude())) {
-                return false;
-            }
-
+        private Boolean sunriseSunsetUpToDate(Date currDateTime) {
             long formerTime = DateStringConverter.stringToDate(sunriseSunset.getDateTime()).getTime();
             long currTime = currDateTime.getTime();
 
@@ -237,15 +167,16 @@ public class WeatherLoader {
             return true;
         }
 
-        private Boolean checkForecastUpToDate(Date currDateTime) {
-            if (forecast == null) {
+        private Boolean checkSunriseSunsetUpToDate(Date currDateTime) {
+            if (sunriseSunset == null ||
+                    !checkLocationUpToDate(sunriseSunset.getLatitude(), sunriseSunset.getLongitude()) ||
+                    !sunriseSunsetUpToDate(currDateTime)) {
                 return false;
             }
+            return true;
+        }
 
-            if (!checkLocationUpToDate(forecast.getLatitude(), forecast.getLongitude())) {
-                return false;
-            }
-
+        private Boolean forecastUpToDate(Date currDateTime) {
             long formerTime = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
             long currTime = currDateTime.getTime();
 
@@ -256,124 +187,105 @@ public class WeatherLoader {
             return true;
         }
 
-        private void updateLocationInfo(OkHttpClient client) {
+        private Boolean checkForecastUpToDate(Date currDateTime) {
+            if (forecast == null ||
+                    !checkLocationUpToDate(forecast.getLatitude(), forecast.getLongitude()) ||
+                    !forecastUpToDate(currDateTime)) {
+                return false;
+            }
+            return true;
+        }
+
+        private void updateLocationInfo(OkHttpClient client) throws IOException, JSONException {
             Request keyRequest = new Request.Builder()
-                    .url(String.format(keyRequestBodyFormat,  apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
+                    .url(String.format(keyRequestBodyFormat, apiKey, Double.toString(location.getLatitude()), Double.toString(location.getLongitude())))
                     .build();
 
-            Response keyResponse = null;
-            String keyResult = null;
-            JSONObject keyResultJSON = null;
-            String locationKey = null;
-            String country = null;
-            String city = null;
-            try {
-                keyResponse = client.newCall(keyRequest).execute();
-                keyResult = keyResponse.body().string();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Response keyResponse = client.newCall(keyRequest).execute();
+            String keyResult = keyResponse.body().string();
 
-            if (keyResult != null) {
-                try {
-                    keyResultJSON = new JSONObject(keyResult);
-                    locationKey = keyResultJSON.getString("Key");
-                    country = keyResultJSON.getJSONObject("Country").getString("ID");
-                    city = keyResultJSON.getString("EnglishName");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
+            JSONObject keyResultJSON = new JSONObject(keyResult);
 
-            locationInfo = new LocationInfo(locationKey, country, city);
+            locationInfo = new LocationInfo(keyResultJSON.getString("Key"), keyResultJSON.getJSONObject("Country").getString("ID"), keyResultJSON.getString("EnglishName"));
+        }
+
+        private void obtainForecastAndSunriseExample() throws JSONException {
+            Date currDateTime = DateStringConverter.stringToDate("2020-03-17T11:50:00+02:00");
+
+            String locationKey = locationKeyExample;
+
+            JSONArray forecastJSON = new JSONArray(forecastJSONExample);
+            JSONArray currConditionsJSON = new JSONArray(currConditionsJSONExample);
+            JSONObject daily5DaysJSON = new JSONObject(daily5DaysJSONExample);
+
+            forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
+            sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
+            weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
+            weatherDataController.saveSunTimesDataByLocation(mainActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
+        }
+
+        private Boolean uploadDataFromFirebase(OkHttpClient client, Date currDateTime) throws IOException, JSONException {
+            if (!checkSunriseSunsetUpToDate(currDateTime)) {
+                updateLocationInfo(client);
+                getForcastFromDB();
+                getSunTimeFromDB();
+            } else if (!checkForecastUpToDate(currDateTime)) {
+                updateLocationInfo(client);
+                getForcastFromDB();
+            } else {
+                // everything already up to date - no upload done
+                return false;
+            }
+            return true;
+        }
+
+        private void uploadSunriseFromAccuWeather(OkHttpClient client, Date currDateTime, String locationKey) throws IOException, JSONException {
+            JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
+            sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
+            weatherDataController.saveSunTimesDataByLocation(mainActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
+        }
+
+        private void uploadForecastFromAccuWeather(OkHttpClient client, Date currDateTime, String locationKey) throws IOException, JSONException {
+            JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
+            JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
+            forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
+            weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
+        }
+
+        private void uploadDataFromAccuWeather(OkHttpClient client, Date currDateTime) throws IOException, JSONException {
+            String locationKey = locationInfo.getLocationKey();
+
+            if (!checkSunriseSunsetUpToDate(currDateTime)) {
+                uploadSunriseFromAccuWeather(client, currDateTime, locationKey);
+                uploadForecastFromAccuWeather(client, currDateTime, locationKey);
+            } else if (!checkForecastUpToDate(currDateTime)) {
+                uploadForecastFromAccuWeather(client, currDateTime, locationKey);
+            } else {
+                // everything from firebase was already up to date - quit function
+                return;
+            }
+        }
+
+        private void obtainForecastAndSunrise() throws IOException, JSONException {
+            OkHttpClient client = new OkHttpClient();
+            Date currDateTime = Calendar.getInstance().getTime();
+
+            if (!uploadDataFromFirebase(client, currDateTime)) {
+                // everything already up to date - quit function
+                return;
+            }
+            uploadDataFromAccuWeather(client, currDateTime);
         }
 
         @Override
         protected Integer doInBackground(Integer... callers) {
 
-            OkHttpClient client = new OkHttpClient();
-
-//            uncomment this line to work with actual current time
-//            Date currDateTime = Calendar.getInstance().getTime();
-
-//            uncomment this line to work with example data
-            Date currDateTime = DateStringConverter.stringToDate("2020-03-17T11:50:00+02:00");
-
-            // checking if current forecast and sunriseSunset are up to date. if not, try loading from firebase.
-            if (!checkSunriseSunsetUpToDate(currDateTime)) {
-                updateLocationInfo(client);
-                getForcastFromDB();
-                getSunTimeFromDB();
-            }
-            else if (!checkForecastUpToDate(currDateTime)) {
-                updateLocationInfo(client);
-                getForcastFromDB();
-            }
-            else {
-                // everything was already up to date - quit function
-                return null;
-            }
-
-//            uncomment this line to work with real data from AccuWeather
-//            String locationKey = locationInfo.getLocationKey();
-
-//            uncomment this line to work with example data
-            String locationKey = locationKeyExample;
-
-//            checking if firebase forecast and sunriseSunset are up to date. if not, try querying AccuWeather.
-            if (!checkSunriseSunsetUpToDate(currDateTime)) {
-//                uncomment this section to work with real data from AccuWeather
-                ////////////////////////////////////////////////////////////////////////////////////
-//                JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
-//                JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
-//                JSONObject daily5DaysJSON = obtainDaily5DayForecast(client, locationKey);
-                ////////////////////////////////////////////////////////////////////////////////////
-
-//                uncomment this section to work with example data
-                ////////////////////////////////////////////////////////////////////////////////////
-                JSONArray forecastJSON = null;
-                JSONArray currConditionsJSON = null;
-                JSONObject daily5DaysJSON = null;
-                try {
-                    forecastJSON = new JSONArray(forecastJSONExample);
-                    currConditionsJSON = new JSONArray(currConditionsJSONExample);
-                    daily5DaysJSON = new JSONObject(daily5DaysJSONExample);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                ////////////////////////////////////////////////////////////////////////////////////
-
-                forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
-                sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
-                weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
-                weatherDataController.saveSunTimesDataByLocation(mainActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
-
-            }
-            else if (!checkForecastUpToDate(currDateTime)) {
-//                uncomment this section to work with real data from AccuWeather
-                ////////////////////////////////////////////////////////////////////////////////////
-//                JSONArray forecastJSON = obtainWeatherForecastJSON(client, locationKey);
-//                JSONArray currConditionsJSON = obtainCurrConditions(client, locationKey);
-                ////////////////////////////////////////////////////////////////////////////////////
-
-//                uncomment this section to work with example data
-                ////////////////////////////////////////////////////////////////////////////////////
-                JSONArray forecastJSON = null;
-                JSONArray currConditionsJSON = null;
-                try {
-                    forecastJSON = new JSONArray(forecastJSONExample);
-                    currConditionsJSON = new JSONArray(currConditionsJSONExample);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                ////////////////////////////////////////////////////////////////////////////////////
-
-                forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
-                weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
-            }
-            else {
-                // everything from firebase was already up to date - quit function
-                return null;
+            try {
+//                obtainForecastAndSunrise();
+                obtainForecastAndSunriseExample();
+            } catch (IOException | JSONException e) {
+                // TODO: go to error screen in this case
+                e.printStackTrace();
             }
             return null;
         }
@@ -391,29 +303,27 @@ public class WeatherLoader {
         private final String daily5DaysJSONExample = "{\"Headline\":{\"EffectiveDate\":\"2020-03-17T13:00:00+02:00\",\"EffectiveEpochDate\":1584442800,\"Severity\":3,\"Text\":\"Expect rainy weather Tuesday afternoon through late Tuesday night\",\"Category\":\"rain\",\"EndDate\":\"2020-03-18T07:00:00+02:00\",\"EndEpochDate\":1584507600,\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/extended-weather-forecast\\/213225?unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?unit=c&lang=en-us\"},\"DailyForecasts\":[{\"Date\":\"2020-03-17T07:00:00+02:00\",\"EpochDate\":1584421200,\"Sun\":{\"Rise\":\"2020-03-17T05:46:00+02:00\",\"EpochRise\":1584416760,\"Set\":\"2020-03-17T17:49:00+02:00\",\"EpochSet\":1584460140},\"Moon\":{\"Rise\":\"2020-03-17T01:18:00+02:00\",\"EpochRise\":1584400680,\"Set\":\"2020-03-17T11:35:00+02:00\",\"EpochSet\":1584437700,\"Phase\":\"WaningCrescent\",\"Age\":23},\"Temperature\":{\"Minimum\":{\"Value\":7,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":13.6,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":-2.4,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":12,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":-2.4,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":10.9,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":6.6,\"DegreeDaySummary\":{\"Heating\":{\"Value\":8,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":89,\"Category\":\"Moderate\",\"CategoryValue\":2,\"Type\":\"Particle Pollution\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":5,\"Category\":\"Moderate\",\"CategoryValue\":2}],\"Day\":{\"Icon\":13,\"IconPhrase\":\"Mostly cloudy w\\/ showers\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"Increasingly windy\",\"LongPhrase\":\"Becoming windier and cooler with increasing clouds; brief showers this afternoon\",\"PrecipitationProbability\":76,\"ThunderstormProbability\":20,\"RainProbability\":76,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":27.8,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":256,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"WindGust\":{\"Speed\":{\"Value\":48.2,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":264,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":4,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":4,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":2,\"HoursOfRain\":2,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":51},\"Night\":{\"Icon\":18,\"IconPhrase\":\"Rain\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"Very windy; rain and drizzle\",\"LongPhrase\":\"Very windy; a couple of evening showers followed by occasional rain and drizzle late\",\"PrecipitationProbability\":68,\"ThunderstormProbability\":20,\"RainProbability\":68,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":38.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":262,\"Localized\":\"W\",\"English\":\"W\"}},\"WindGust\":{\"Speed\":{\"Value\":53.7,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":269,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":5.2,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":5.2,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":3,\"HoursOfRain\":3,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":82},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=1&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=1&unit=c&lang=en-us\"},{\"Date\":\"2020-03-18T07:00:00+02:00\",\"EpochDate\":1584507600,\"Sun\":{\"Rise\":\"2020-03-18T05:45:00+02:00\",\"EpochRise\":1584503100,\"Set\":\"2020-03-18T17:50:00+02:00\",\"EpochSet\":1584546600},\"Moon\":{\"Rise\":\"2020-03-18T02:12:00+02:00\",\"EpochRise\":1584490320,\"Set\":\"2020-03-18T12:29:00+02:00\",\"EpochSet\":1584527340,\"Phase\":\"WaningCrescent\",\"Age\":24},\"Temperature\":{\"Minimum\":{\"Value\":7.6,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":9.5,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":2.6,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":4.2,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":2.6,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":3.4,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":4.2,\"DegreeDaySummary\":{\"Heating\":{\"Value\":9,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":43,\"Category\":\"Good\",\"CategoryValue\":1,\"Type\":\"Ozone\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":3,\"Category\":\"Moderate\",\"CategoryValue\":2}],\"Day\":{\"Icon\":32,\"IconPhrase\":\"Windy\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"Strong winds subsiding\",\"LongPhrase\":\"Strong winds gradually subsiding; a morning shower in spots; otherwise, chilly with variable clouds\",\"PrecipitationProbability\":40,\"ThunderstormProbability\":20,\"RainProbability\":40,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":38.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":267,\"Localized\":\"W\",\"English\":\"W\"}},\"WindGust\":{\"Speed\":{\"Value\":51.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":282,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"TotalLiquid\":{\"Value\":0.2,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0.2,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0.5,\"HoursOfRain\":0.5,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":61},\"Night\":{\"Icon\":36,\"IconPhrase\":\"Intermittent clouds\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Winds gradually subsiding\",\"LongPhrase\":\"Partly cloudy with winds gradually subsiding\",\"PrecipitationProbability\":25,\"ThunderstormProbability\":0,\"RainProbability\":25,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":25.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":258,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"WindGust\":{\"Speed\":{\"Value\":42.6,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":258,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":52},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=2&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=2&unit=c&lang=en-us\"},{\"Date\":\"2020-03-19T07:00:00+02:00\",\"EpochDate\":1584594000,\"Sun\":{\"Rise\":\"2020-03-19T05:44:00+02:00\",\"EpochRise\":1584589440,\"Set\":\"2020-03-19T17:50:00+02:00\",\"EpochSet\":1584633000},\"Moon\":{\"Rise\":\"2020-03-19T03:01:00+02:00\",\"EpochRise\":1584579660,\"Set\":\"2020-03-19T13:25:00+02:00\",\"EpochSet\":1584617100,\"Phase\":\"WaningCrescent\",\"Age\":25},\"Temperature\":{\"Minimum\":{\"Value\":6.1,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":10.8,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":0.1,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":7.8,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":0.1,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":5,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":5,\"DegreeDaySummary\":{\"Heating\":{\"Value\":10,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":55,\"Category\":\"Moderate\",\"CategoryValue\":2,\"Type\":\"Particle Pollution\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":7,\"Category\":\"High\",\"CategoryValue\":3}],\"Day\":{\"Icon\":4,\"IconPhrase\":\"Intermittent clouds\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"A p.m. shower in places\",\"LongPhrase\":\"Windy and cool with intervals of clouds and sunshine; a shower in spots in the afternoon\",\"PrecipitationProbability\":44,\"ThunderstormProbability\":20,\"RainProbability\":44,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":31.5,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":254,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"WindGust\":{\"Speed\":{\"Value\":42.6,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":258,\"Localized\":\"WSW\",\"English\":\"WSW\"}},\"TotalLiquid\":{\"Value\":0.6,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0.6,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0.5,\"HoursOfRain\":0.5,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":60},\"Night\":{\"Icon\":36,\"IconPhrase\":\"Intermittent clouds\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"Partly cloudy, a shower late\",\"LongPhrase\":\"Windy in the evening; partly cloudy with a stray shower late\",\"PrecipitationProbability\":40,\"ThunderstormProbability\":20,\"RainProbability\":40,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":25.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":264,\"Localized\":\"W\",\"English\":\"W\"}},\"WindGust\":{\"Speed\":{\"Value\":42.6,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":267,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":0.2,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0.2,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0.5,\"HoursOfRain\":0.5,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":63},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=3&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=3&unit=c&lang=en-us\"},{\"Date\":\"2020-03-20T07:00:00+02:00\",\"EpochDate\":1584680400,\"Sun\":{\"Rise\":\"2020-03-20T05:42:00+02:00\",\"EpochRise\":1584675720,\"Set\":\"2020-03-20T17:51:00+02:00\",\"EpochSet\":1584719460},\"Moon\":{\"Rise\":\"2020-03-20T03:43:00+02:00\",\"EpochRise\":1584668580,\"Set\":\"2020-03-20T14:21:00+02:00\",\"EpochSet\":1584706860,\"Phase\":\"WaningCrescent\",\"Age\":26},\"Temperature\":{\"Minimum\":{\"Value\":4.3,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":8.9,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":0.9,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":6.2,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":0.9,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":4.6,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":4,\"DegreeDaySummary\":{\"Heating\":{\"Value\":11,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":35,\"Category\":\"Good\",\"CategoryValue\":1,\"Type\":\"Ozone\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":3,\"Category\":\"Moderate\",\"CategoryValue\":2}],\"Day\":{\"Icon\":6,\"IconPhrase\":\"Mostly cloudy\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Moderate\",\"ShortPhrase\":\"A shower in the morning\",\"LongPhrase\":\"A morning shower; otherwise, mostly cloudy and chilly, becoming breezy in the afternoon\",\"PrecipitationProbability\":62,\"ThunderstormProbability\":20,\"RainProbability\":62,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":22.2,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":259,\"Localized\":\"W\",\"English\":\"W\"}},\"WindGust\":{\"Speed\":{\"Value\":38.9,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":266,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":3.1,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":3.1,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":2,\"HoursOfRain\":2,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":77},\"Night\":{\"Icon\":12,\"IconPhrase\":\"Showers\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Light\",\"ShortPhrase\":\"A brief evening shower or two\",\"LongPhrase\":\"A brief shower or two in the evening; otherwise, mostly cloudy and chilly\",\"PrecipitationProbability\":67,\"ThunderstormProbability\":20,\"RainProbability\":67,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":11.1,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":285,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"WindGust\":{\"Speed\":{\"Value\":33.3,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":267,\"Localized\":\"W\",\"English\":\"W\"}},\"TotalLiquid\":{\"Value\":2.9,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":2.9,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":1.5,\"HoursOfRain\":1.5,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":88},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=4&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=4&unit=c&lang=en-us\"},{\"Date\":\"2020-03-21T07:00:00+02:00\",\"EpochDate\":1584766800,\"Sun\":{\"Rise\":\"2020-03-21T05:41:00+02:00\",\"EpochRise\":1584762060,\"Set\":\"2020-03-21T17:52:00+02:00\",\"EpochSet\":1584805920},\"Moon\":{\"Rise\":\"2020-03-21T04:21:00+02:00\",\"EpochRise\":1584757260,\"Set\":\"2020-03-21T15:17:00+02:00\",\"EpochSet\":1584796620,\"Phase\":\"WaningCrescent\",\"Age\":27},\"Temperature\":{\"Minimum\":{\"Value\":5.6,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":9.9,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperature\":{\"Minimum\":{\"Value\":2.4,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":11.8,\"Unit\":\"C\",\"UnitType\":17}},\"RealFeelTemperatureShade\":{\"Minimum\":{\"Value\":2.4,\"Unit\":\"C\",\"UnitType\":17},\"Maximum\":{\"Value\":7.5,\"Unit\":\"C\",\"UnitType\":17}},\"HoursOfSun\":4.9,\"DegreeDaySummary\":{\"Heating\":{\"Value\":10,\"Unit\":\"C\",\"UnitType\":17},\"Cooling\":{\"Value\":0,\"Unit\":\"C\",\"UnitType\":17}},\"AirAndPollen\":[{\"Name\":\"AirQuality\",\"Value\":17,\"Category\":\"Good\",\"CategoryValue\":1,\"Type\":\"Ozone\"},{\"Name\":\"Grass\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Mold\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Ragweed\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"Tree\",\"Value\":0,\"Category\":\"Low\",\"CategoryValue\":1},{\"Name\":\"UVIndex\",\"Value\":6,\"Category\":\"High\",\"CategoryValue\":3}],\"Day\":{\"Icon\":14,\"IconPhrase\":\"Partly sunny w\\/ showers\",\"HasPrecipitation\":true,\"PrecipitationType\":\"Rain\",\"PrecipitationIntensity\":\"Moderate\",\"ShortPhrase\":\"Spotty morning showers\",\"LongPhrase\":\"A couple of morning showers; otherwise, chilly with times of clouds and sun\",\"PrecipitationProbability\":80,\"ThunderstormProbability\":20,\"RainProbability\":80,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":14.8,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":296,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"WindGust\":{\"Speed\":{\"Value\":33.3,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":298,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"TotalLiquid\":{\"Value\":5,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":5,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":2,\"HoursOfRain\":2,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":65},\"Night\":{\"Icon\":35,\"IconPhrase\":\"Partly cloudy\",\"HasPrecipitation\":false,\"ShortPhrase\":\"Partly cloudy\",\"LongPhrase\":\"Partly cloudy\",\"PrecipitationProbability\":3,\"ThunderstormProbability\":0,\"RainProbability\":3,\"SnowProbability\":0,\"IceProbability\":0,\"Wind\":{\"Speed\":{\"Value\":14.8,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":301,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"WindGust\":{\"Speed\":{\"Value\":29.6,\"Unit\":\"km\\/h\",\"UnitType\":7},\"Direction\":{\"Degrees\":300,\"Localized\":\"WNW\",\"English\":\"WNW\"}},\"TotalLiquid\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Rain\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"Snow\":{\"Value\":0,\"Unit\":\"cm\",\"UnitType\":4},\"Ice\":{\"Value\":0,\"Unit\":\"mm\",\"UnitType\":3},\"HoursOfPrecipitation\":0,\"HoursOfRain\":0,\"HoursOfSnow\":0,\"HoursOfIce\":0,\"CloudCover\":36},\"Sources\":[\"AccuWeather\"],\"MobileLink\":\"http:\\/\\/m.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=5&unit=c&lang=en-us\",\"Link\":\"http:\\/\\/www.accuweather.com\\/en\\/il\\/jerusalem\\/213225\\/daily-weather-forecast\\/213225?day=5&unit=c&lang=en-us\"}]}";
     }
 
-    private void getForcastFromDB()
-    {
+    private void getForcastFromDB() {
         int attempts = 0;
         forecast = null;
         while (forecast == null && attempts < NUM_OF_ATTEMPTS) {
             forecast = weatherDataController.getForecastDataByLocation(mainActivity,
                     locationInfo.getCountry(), locationInfo.getCity());
             attempts++;
-            if(attempts == 5){
+            if (attempts == 5) {
                 //TODO Error to user? or what actions should we do. maybe log num of attempts.
             }
         }
     }
 
-    private void getSunTimeFromDB()
-    {
+    private void getSunTimeFromDB() {
         int attempts = 0;
         sunriseSunset = null;
         while (sunriseSunset == null && attempts < NUM_OF_ATTEMPTS) {
             sunriseSunset = weatherDataController.getSunTimesDataByLocation(mainActivity,
                     locationInfo.getCountry(), locationInfo.getCity());
             attempts++;
-            if(attempts == 5){
+            if (attempts == 5) {
                 //TODO Error to user? or what actions should we do. maybe log num of attempts.
             }
         }
