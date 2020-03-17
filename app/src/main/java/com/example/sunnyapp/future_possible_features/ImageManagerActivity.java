@@ -22,7 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.example.sunnyapp.FirebaseController;
+import com.example.sunnyapp.FireBaseController;
 import com.example.sunnyapp.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -56,7 +56,7 @@ public class ImageManagerActivity extends AppCompatActivity {
         private FirebaseFirestore mDatabaseRef;
         private DocumentReference mDocRef;
         private FirebaseAuth mAuth;
-        private FirebaseController firebaseController;
+        private FireBaseController firebaseController;
 
         private StorageTask mUploadTask;
 
@@ -119,10 +119,10 @@ public class ImageManagerActivity extends AppCompatActivity {
 
     private void initFireBaseVars() {
         imageFlowController = ImageFlowController.getInstance();
-        firebaseController = FirebaseController.getInstance();
+        firebaseController = FireBaseController.getInstance();
         mStorageRef = firebaseController.storage.getReference("uploads");
-        mDatabaseRef = firebaseController.db;
-        mAuth = firebaseController.mAuth;
+        mDatabaseRef = firebaseController.dB;
+        mAuth = firebaseController.auth;
     }
 
     private void openFileChooser() {

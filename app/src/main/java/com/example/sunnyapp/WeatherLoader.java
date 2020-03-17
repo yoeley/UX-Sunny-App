@@ -215,10 +215,7 @@ public class WeatherLoader {
                 e.printStackTrace();
             }
 
-            if (results[0] > 1000) {
-                return false;
-            }
-            return true;
+            return !(results[0] > 1000);
         }
 
         private Boolean checkSunriseSunsetUpToDate(Date currDateTime) {
