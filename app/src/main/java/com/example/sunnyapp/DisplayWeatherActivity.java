@@ -57,6 +57,8 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     protected boolean snow = false;
     protected boolean lightning = false;
 
+    private final static long ONE_HOUR = 3600000; // in millis
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,40 +93,62 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     }
 
     private void extractCurrentWeather(){
-        int idIcon = 1; //TODO: get the icon id.
+        int idIcon = forecast.getWeatherIcon();
         if (cloudsIds.contains(idIcon)) { clouds = true; }
         if (rainIds.contains(idIcon)) { rain = true; }
         if (snowIds.contains(idIcon)) { snow = true; }
         if (lightningIds.contains(idIcon)) { lightning = true; }
     }
 
+    public int getHourOfDayState() {
+        long sunrise = DateStringConverter.stringToDate(sunriseSunset.getSunrise()).getTime();
+        long sunset = DateStringConverter.stringToDate(sunriseSunset.getSunset()).getTime();
+        long currTime = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
+
+        if (sunrise - currTime > (ONE_HOUR * 0.5)) {
+            return 4; // night
+        }
+        if (Math.abs(sunrise - currTime) < (ONE_HOUR * 0.5)) {
+            return 1; // sunrise time
+        }
+        if (Math.abs(sunset - currTime) < (ONE_HOUR * 0.5)) {
+            return 3; // sunset time
+        }
+        if (currTime - sunset > (ONE_HOUR * 0.5)) {
+            return 4; // night
+        }
+        return 2; // midday
+    }
+
     private void setBackground(Boolean withClouds){
         View view = this.getWindow().getDecorView();
-        int hourOfDay = 6; // TODO: get the hour, and set the cases according the type of the
+        int hourOfDay = getHourOfDayState();
         // variable of the hour.
 
         //assume it's early morning. all other cases are taken care of in switch statement:
-        Drawable background = ContextCompat.getDrawable(this, R.drawable.midday);
-        FrameLayout layout = (FrameLayout) findViewById(R.id.day_clouds);
+        Drawable background = null;
+        FrameLayout layout = null;
         switch (hourOfDay) {
             case 1:
                 background = ContextCompat.getDrawable(this, R.drawable.sunrise);
                 layout = (FrameLayout)findViewById(R.id.foggy_clouds);
                 break;
             case 2:
-                background = ContextCompat.getDrawable(this, R.drawable.early_morning);
-                layout = (FrameLayout)findViewById(R.id.morning_clouds);
+                if (clouds == false) {
+                    background = ContextCompat.getDrawable(this, R.drawable.midday);
+                    layout = (FrameLayout) findViewById(R.id.day_clouds);
+                }
+                else {
+                    background = ContextCompat.getDrawable(this, R.drawable.midday_cloudy);
+                    layout = (FrameLayout) findViewById(R.id.foggy_clouds);
+                }
                 break;
             case 3:
-                background = ContextCompat.getDrawable(this, R.drawable.midday_cloudy);
-                layout = (FrameLayout)findViewById(R.id.foggy_clouds);
-                break;
-            case 4:
                 background = ContextCompat.getDrawable(this, R.drawable.sunset);
                 layout = (FrameLayout)findViewById(R.id.night_clouds);
                 setNight();
                 break;
-            case 5:
+            case 4:
                 background = ContextCompat.getDrawable(this, R.drawable.night);
                 layout = (FrameLayout)findViewById(R.id.night_clouds);
                 setNight();
