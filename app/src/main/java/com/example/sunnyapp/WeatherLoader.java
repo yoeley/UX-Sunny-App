@@ -220,8 +220,8 @@ public class WeatherLoader {
 
             forecast = ForecastGenerator.generate(location, locationKey, currDateTime, forecastJSON, currConditionsJSON);
             sunriseSunset = SunriseSunsetGenerator.generate(location, locationKey, currDateTime, daily5DaysJSON);
-            weatherDataController.saveForecastDataByLocation(mainActivity, forecast, locationInfo.getCountry(), locationInfo.getCity());
-            weatherDataController.saveSunTimesDataByLocation(mainActivity, sunriseSunset, locationInfo.getCountry(), locationInfo.getCity());
+            weatherDataController.saveForecastDataByLocation(mainActivity, forecast, "Isreal", "Jerusalem");
+            weatherDataController.saveSunTimesDataByLocation(mainActivity, sunriseSunset, "Isreal", "Jerusalem");
         }
 
         private Boolean uploadDataFromFirebase(OkHttpClient client, Date currDateTime) throws IOException, JSONException {
@@ -279,11 +279,16 @@ public class WeatherLoader {
 
         @Override
         protected Integer doInBackground(Integer... callers) {
+//            try {
+//                obtainForecastAndSunrise();
+//            } catch (IOException | JSONException e) {
+//                // TODO: go to error screen in this case
+//                e.printStackTrace();
+//            }
 
             try {
-//                obtainForecastAndSunrise();
                 obtainForecastAndSunriseExample();
-            } catch (IOException | JSONException e) {
+            } catch (JSONException e) {
                 // TODO: go to error screen in this case
                 e.printStackTrace();
             }
