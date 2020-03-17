@@ -106,21 +106,18 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         long currTime = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
 
         if (sunrise - currTime > (ONE_HOUR * 0.5)) {
-            return 5; // night
+            return 4; // night
         }
         if (Math.abs(sunrise - currTime) < (ONE_HOUR * 0.5)) {
             return 1; // sunrise time
         }
-        if (currTime - sunrise < (ONE_HOUR * 2) && currTime - sunrise > 0) {
-            return 1; // early morning
-        }
         if (Math.abs(sunset - currTime) < (ONE_HOUR * 0.5)) {
-            return 4; // sunset time
+            return 3; // sunset time
         }
         if (currTime - sunset > (ONE_HOUR * 0.5)) {
-            return 5; // night
+            return 4; // night
         }
-        return 3; // midday
+        return 2; // midday
     }
 
     private void setBackground(Boolean withClouds){
@@ -129,27 +126,29 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         // variable of the hour.
 
         //assume it's early morning. all other cases are taken care of in switch statement:
-        Drawable background = ContextCompat.getDrawable(this, R.drawable.midday);
-        FrameLayout layout = (FrameLayout) findViewById(R.id.day_clouds);
+        Drawable background = null;
+        FrameLayout layout = null;
         switch (hourOfDay) {
             case 1:
                 background = ContextCompat.getDrawable(this, R.drawable.sunrise);
                 layout = (FrameLayout)findViewById(R.id.foggy_clouds);
                 break;
             case 2:
-                background = ContextCompat.getDrawable(this, R.drawable.early_morning);
-                layout = (FrameLayout)findViewById(R.id.morning_clouds);
+                if (clouds == false) {
+                    background = ContextCompat.getDrawable(this, R.drawable.midday);
+                    layout = (FrameLayout) findViewById(R.id.day_clouds);
+                }
+                else {
+                    background = ContextCompat.getDrawable(this, R.drawable.midday_cloudy);
+                    layout = (FrameLayout) findViewById(R.id.foggy_clouds);
+                }
                 break;
             case 3:
-                background = ContextCompat.getDrawable(this, R.drawable.midday_cloudy);
-                layout = (FrameLayout)findViewById(R.id.foggy_clouds);
-                break;
-            case 4:
                 background = ContextCompat.getDrawable(this, R.drawable.sunset);
                 layout = (FrameLayout)findViewById(R.id.night_clouds);
                 setNight();
                 break;
-            case 5:
+            case 4:
                 background = ContextCompat.getDrawable(this, R.drawable.night);
                 layout = (FrameLayout)findViewById(R.id.night_clouds);
                 setNight();
