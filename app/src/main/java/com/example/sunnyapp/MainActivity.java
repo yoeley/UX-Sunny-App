@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadWeather() {
         weatherLoader.setLocation(location);
         weatherLoader.setMainActivity(mainActivity);
-        weatherLoader.loadWeather();
+        weatherLoader.loadWeather(this);
     }
 
     /**
