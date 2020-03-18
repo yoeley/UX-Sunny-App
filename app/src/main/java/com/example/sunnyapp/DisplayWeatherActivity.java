@@ -37,7 +37,9 @@ import java.util.Set;
 
 import xyz.matteobattilana.library.WeatherView;
 
-
+/**
+ * displays the weather quality to the user, through both visual imagery and an informative graph
+ */
 public class DisplayWeatherActivity extends AppCompatActivity {
 
     private LineChart chart;
@@ -63,6 +65,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     private final static long ONE_HOUR = 3600000; // in millis
     private final static String BREAK_TIME_TEXT_FORMAT = "Take a break at: %s:%s";
 
+    /**
+     * sets up the activity on it's creation
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,17 +83,26 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         setDisplay();
     }
 
+    /**
+     * retrieves all weather-related data and prepares the app to use it
+     */
     private void setWeather() {
         weatherLoader = WeatherLoader.getInstance();
         forecast = weatherLoader.getForecast();
         sunriseSunset = weatherLoader.getSunriseSunset();
     }
 
+    /**
+     * sets the elements on the screen for display
+     */
     private void setDisplay() {
         setDisplayChart();
         setWeatherFeaturesOnActivity();
     }
 
+    /**
+     * sets the display to match the current weather
+     */
     private void setWeatherFeaturesOnActivity(){
         extractCurrentWeather();
         setBackground(clouds);
@@ -96,6 +111,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         if (lightning) { setLightning(); }
     }
 
+    /**
+     * get the current state of weather
+     */
     private void extractCurrentWeather(){
         int idIcon = forecast.getWeatherIcon();
         if (cloudsIds.contains(idIcon)) { clouds = true; }
@@ -104,7 +122,11 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         if (lightningIds.contains(idIcon)) { lightning = true; }
     }
 
-    public int getHourOfDayState() {
+    /**
+     * gets the time period of the day
+     * @return
+     */
+    public int getTimeOfDayState() {
         long sunrise = DateStringConverter.stringToDate(sunriseSunset.getSunrise()).getTime();
         long sunset = DateStringConverter.stringToDate(sunriseSunset.getSunset()).getTime();
         long currTime = DateStringConverter.stringToDate(forecast.getDateTime()).getTime();
@@ -124,15 +146,19 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         return 2; // midday
     }
 
+    /**
+     * sets the display's background to match the time of the day
+     * @param withClouds
+     */
     private void setBackground(Boolean withClouds){
         View view = this.getWindow().getDecorView();
-        int hourOfDay = getHourOfDayState();
+        int timeOfDay = getTimeOfDayState();
         // variable of the hour.
 
         //assume it's early morning. all other cases are taken care of in switch statement:
         Drawable background = null;
         FrameLayout layout = null;
-        switch (hourOfDay) {
+        switch (timeOfDay) {
             case 1:
                 background = ContextCompat.getDrawable(this, R.drawable.sunrise);
                 layout = (FrameLayout)findViewById(R.id.foggy_clouds);
@@ -166,23 +192,35 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * sets the display to show rain
+     */
     private void setRain(){
         WeatherView weatherView = findViewById(R.id.rain);
         weatherView.setVisibility(View.VISIBLE);
         weatherView.startAnimation();
     }
 
+    /**
+     * sets the display to show snow
+     */
     private void setSnow(){
         WeatherView weatherView = findViewById(R.id.snow);
         weatherView.setVisibility(View.VISIBLE);
         weatherView.startAnimation();
     }
 
+    /**
+     * sets the display to show lightning
+     */
     private void setLightning(){
         LottieAnimationView lightning = findViewById(R.id.lightning);
         lightning.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * sets the display to show night time
+     */
     private void setNight(){
         LottieAnimationView moon = findViewById(R.id.moon);
         LottieAnimationView sun = findViewById(R.id.sun);
@@ -190,6 +228,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         moon.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * sets the chart that displays weather quality
+     */
     private void setDisplayChart() {
         setChart();
         setXAxis();
@@ -199,6 +240,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         setFont();
     }
 
+    /**
+     * sets meta-attributes of the chart (no data yet)
+     */
     private void setChart() {
         chart = findViewById(R.id.chart);
         chart.setBackgroundColor(Color.TRANSPARENT);
@@ -216,6 +260,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * sets the X axis of the chart
+     */
     private void setXAxis() {
         XAxis x = chart.getXAxis();
         x.setTypeface(tfLight);
@@ -238,6 +285,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * sets the Y axis of the chart
+     */
     private void setYAxis() {
         YAxis y = chart.getAxisLeft();
         y.setTypeface(tfLight);
@@ -247,17 +297,28 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         y.setDrawGridLines(false);
     }
 
-
-
+    /**
+     * sets the font displayed in the chart
+     */
     private void setFont() {
         tfRegular = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
     }
 
+    /**
+     * gets the round hour (no minutes) of the best weather
+     * @param hourOfMax
+     * @return
+     */
     private String hourOfMaxHour(float hourOfMax) {
         return String.valueOf((int)hourOfMax % 24);
     }
 
+    /**
+     * gets the minutes after the hour in the time of the best weather
+     * @param hourOfMax
+     * @return
+     */
     private String hourOfMaxMinute(float hourOfMax) {
         int hourOfMaxMinuteInt = (int) ((hourOfMax % 1) * 60);
         String hourOfMaxMinute = String.valueOf(hourOfMaxMinuteInt);
@@ -267,6 +328,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         return hourOfMaxMinute;
     }
 
+    /**
+     * gets the time of the best weather to take a break
+     * @param values
+     */
     private void setBestBreakTime(ArrayList<Entry> values) {
         ArrayList<Double> currForecast = forecast.getForeCast();
         Double maxForecast = Collections.max(currForecast);
@@ -277,6 +342,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         breakTimeText.setText(String.format(BREAK_TIME_TEXT_FORMAT, hourOfMaxHour(hourOfMax), hourOfMaxMinute(hourOfMax)));
     }
 
+    /**
+     * creates the list of data that will fill the chart
+     * @return
+     */
     private ArrayList<Entry> createData() {
 
         Date dateTime = DateStringConverter.stringToDate(forecast.getDateTime());
@@ -302,7 +371,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         return values;
     }
 
-
+    /**
+     * sets the attribute of the chart's line
+     */
     private void setData() {
         ArrayList<Entry> values = createData();
 
@@ -328,6 +399,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.setData(data);
     }
 
+    /**
+     * fits the chart to the data after data is retrieved
+     */
     private void setChartAfterDataSet() {
         chart.getAxisRight().setEnabled(false);
         chart.getAxisLeft().setEnabled(false);
@@ -339,6 +413,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.invalidate();
     }
 
+    /**
+     * sets the notification (bell) button to show notifications are enabled/disabled
+     */
     private void setNotificationButton() {
         ImageButton notificationButton = findViewById(R.id.notification_button);
 
@@ -350,6 +427,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * track and remembers the user's choice of weather to enable or disable notifications
+     * @param view
+     */
     public void enableDisableNotification(View view) {
         if (isNotificationEnabled) {
             FileManager.writeToFile("No\n", "shouldSetNotification.txt", this);
@@ -367,6 +448,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         setNotification();
     }
 
+    /**
+     * sets the "best time for a break" notification
+     * @param pickWeatherTimeMillis
+     */
     private void setPickWeatherNotificationScheduler(long pickWeatherTimeMillis) {
         AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, PickWeatherNotificationScheduler.class);
@@ -374,6 +459,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         alarmManager.set(AlarmManager.RTC_WAKEUP, pickWeatherTimeMillis, pendingIntent);
     }
 
+    /**
+     * cancells the "best time for a break" notification
+     */
     private void cancelPickWeatherNotificationScheduler() {
         AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, PickWeatherNotificationScheduler.class);
@@ -381,6 +469,10 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         alarmManager.cancel(pendingIntent);
     }
 
+    /**
+     * checks if notifications are enabled or disabled
+     * @return
+     */
     private Boolean checkNotificationsEnabled() {
         String shouldSetNotification = FileManager.readFromFile(getApplicationContext(), "shouldSetNotification.txt");
         if (shouldSetNotification.equals("Yes\n") || shouldSetNotification.equals("")) {
@@ -391,6 +483,9 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * sets the "best time for a break" notification to the right time, if notifications are enabled
+     */
     private void setNotification() {
 
         cancelPickWeatherNotificationScheduler();
@@ -403,6 +498,11 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         setNotificationButton();
     }
 
+    /**
+     * sets the back button to move the app to the background
+     * (otherwise it would go back to the loading screen, which is undesirable.
+     * the app updates automatically, and we want to allow the user to quit it naturally)
+     */
     @Override
     public void onBackPressed()
     {

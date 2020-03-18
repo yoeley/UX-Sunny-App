@@ -1,5 +1,8 @@
 package com.example.sunnyapp;
 
+/**
+ * the info a location where the user is/was
+ */
 public class LocationInfo {
 
     private String locationKey = null;

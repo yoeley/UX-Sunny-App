@@ -3,6 +3,9 @@ package com.example.sunnyapp;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * holds information about the sunrise and sunset times for a specific date
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SunriseSunset {
 

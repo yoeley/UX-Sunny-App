@@ -1,7 +1,6 @@
 package com.example.sunnyapp.future_possible_features;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.widget.Toast;
 
 import com.example.sunnyapp.WeatherLoader;
@@ -35,7 +34,7 @@ public class WeatherDataCache {
 
         try {
             fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
-            fos.write(WeatherLoader.staticToString().getBytes());
+            fos.write(WeatherLoader.objectToString().getBytes());
             Toast.makeText(context, "Saved to " + directory + "/" + fileName, Toast.LENGTH_LONG).show();
         } catch (FileNotFoundException e) {
             e.printStackTrace();

@@ -11,10 +11,10 @@ import java.util.Collections;
 import java.util.Date;
 
 /**
- * this generator is written to match the current AccuWeather API and the current coputation of the
- * "Sunny factor" (for now, the sunny factor is simply the "RealFeelTemperature" from AccuWeather).
- * this implementation can and will probably change over time to match new API or new definitions
- * for the "Sunny factor"
+ * generates Forecast objects out of raw data.
+ * this generator is written to match the current AccuWeather API and the current computation of the
+ * "Sunny factor". this implementation can and will probably change over time to match new API or
+ * new definitions for the "Sunny factor"
  */
 public class ForecastGenerator {
 
@@ -29,6 +29,16 @@ public class ForecastGenerator {
     private static final Double bestUVIndex = 2.0; // out of 10
     private static final Double bestCloudCover = 20.0; // out of 100
 
+    /**
+     * generates a forecast object out of data (JSON strings) retrieved from AccuWeather
+     * @param location
+     * @param locationKey
+     * @param currDateTime
+     * @param forecastJSON
+     * @param currConditionsJSON
+     * @return
+     * @throws JSONException
+     */
     public static Forecast generate(Location location, String locationKey, Date currDateTime, JSONArray forecastJSON, JSONArray currConditionsJSON) throws JSONException {
         Forecast forecast = new Forecast();
 
@@ -42,10 +52,22 @@ public class ForecastGenerator {
         return forecast;
     }
 
+    /**
+     * gets the number of the weather icon (which sums up the current weather for visual display)
+     * @param currConditionsJSON
+     * @return
+     * @throws JSONException
+     */
     private static int weatherIcon(JSONArray currConditionsJSON) throws JSONException {
         return currConditionsJSON.getJSONObject(0).getInt("WeatherIcon");
     }
 
+    /**
+     * gets the SunnyFactor for future time
+     * @param forecastOneHour
+     * @return
+     * @throws JSONException
+     */
     private static Double forecastSunnyFactor(JSONObject forecastOneHour) throws JSONException {
         Double realFeelTemperature = forecastOneHour.getJSONObject("RealFeelTemperature").getDouble("Value");
         Double windSpeed = forecastOneHour.getJSONObject("Wind").getJSONObject("Speed").getDouble("Value");
@@ -67,6 +89,12 @@ public class ForecastGenerator {
                 - Math.log(Math.abs(bestCloudCover - cloudCover) + 1));
     }
 
+    /**
+     * gets the SunnyFactor for current time
+     * @param forecastOneHour
+     * @return
+     * @throws JSONException
+     */
     private static Double currConditionsSunnyFactor(JSONObject forecastOneHour) throws JSONException {
         Double realFeelTemperature = forecastOneHour.getJSONObject("RealFeelTemperature").getJSONObject("Metric").getDouble("Value");
         Double windSpeed = forecastOneHour.getJSONObject("Wind").getJSONObject("Speed").getJSONObject("Metric").getDouble("Value");
@@ -85,6 +113,13 @@ public class ForecastGenerator {
                 - Math.log(Math.abs(bestCloudCover - cloudCover) + 1));
     }
 
+    /**
+     * gets the SunnyFactor for the next 12 hours
+     * @param forecastJSON
+     * @param currConditionsJSON
+     * @return
+     * @throws JSONException
+     */
     private static ArrayList<Double> forecastSunnyFactor(JSONArray forecastJSON, JSONArray currConditionsJSON) throws JSONException {
         ArrayList<Double> forecastSunnyFactor = new ArrayList<Double>();
 

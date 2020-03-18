@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.location.LocationListener;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -17,10 +16,8 @@ import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -45,6 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private LocationListenerGPS locationListenerGPS;
     private Boolean isFirstDisplay;
 
+    /**
+     * starts the app up upon it's creation
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,10 +59,9 @@ public class MainActivity extends AppCompatActivity {
         getLastLocation();
     }
 
-    public void externalGetLastLocation() {
-        getLastLocation();
-    }
-
+    /**
+     * gets the last known location of the user. usually it's the current location
+     */
     @SuppressLint("MissingPermission")
     private void getLastLocation() {
         if (checkPermissions()) {
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                         new OnCompleteListener<Location>() {
                             @Override
                             public void onComplete(@NonNull Task<Location> task) {
-                                loadWeatherForLoaction(task);
+                                loadWeatherForLocation(task);
                             }
                         }
                 );
@@ -82,7 +82,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void loadWeatherForLoaction(@NonNull Task<Location> task) {
+    /**
+     * loads the weather forecast for a given location
+     * @param task
+     */
+    private void loadWeatherForLocation(@NonNull Task<Location> task) {
         location = task.getResult();
         setGetLastLocationAgain();
         if (location == null) {
@@ -93,12 +97,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * prompts the user to turn on their location
+     */
     private void promptTurnOnLocation() {
         Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show();
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         startActivity(intent);
     }
 
+    /**
+     * checks whether the user is indoors or outdoors.
+     * this will enable us to collect statistics about the times  when people like to go outside,
+     * and over time achieve the best prediction of when is a good time to go out side
+     */
     @SuppressLint("MissingPermission")
     private void checkIsOutdoors() {
         // if last fix on location happened more then 7 seconds ago, user is inside.
@@ -117,6 +129,11 @@ public class MainActivity extends AppCompatActivity {
         }, 10000);
     }
 
+    /**
+     * try to get a GPS fix, and update weather the user is outdoor or indoors accordingly
+     * (got GPS fix = user is outdoors)
+     * @param locationManager
+     */
     @SuppressLint("MissingPermission")
     private void getUpdatedGPSLocation(LocationManager locationManager) {
         Location currLocation = null;
@@ -130,6 +147,9 @@ public class MainActivity extends AppCompatActivity {
         locationManager.removeUpdates(locationListenerGPS);
     }
 
+    /**
+     * downloads weather data for the up
+     */
     private void loadWeather() {
         weatherLoader.setLocation(location);
         weatherLoader.setMainActivity(mainActivity);
@@ -137,20 +157,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * this method will upload to the firebase server information about if the user is outside or
-     * not. it's not yet implemented
-     *
+     * this method will upload to the firebase server information about whether the user is outdoors
+     * or indoors. it's not yet implemented     *
      * @param isOutside
      */
-    private void uploadIsOutdoors(Boolean isOutside) {
-//        // this code was used, and may still be used, for testing the checkIsOutdoors method
-//        if (isOutside) {
-//            logo.setText("Outside");
-//        } else {
-//            logo.setText("Inside");
-//        }
-    }
+    private void uploadIsOutdoors(Boolean isOutside) {}
 
+    /**
+     * requests a location fix
+     */
     @SuppressLint("MissingPermission")
     private void requestNewLocationData() {
 
@@ -169,6 +184,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private LocationCallback mLocationCallback = new LocationCallback() {
+        /**
+         * updates location on result
+         * @param locationResult
+         */
         @Override
         public void onLocationResult(LocationResult locationResult) {
             Location location = locationResult.getLastLocation();
@@ -176,6 +195,10 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * checks for location-access permissions
+     * @return
+     */
     private boolean checkPermissions() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -184,6 +207,10 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    /**
+     * requests location-access permissions
+     * @return
+     */
     private void requestPermissions() {
         ActivityCompat.requestPermissions(
                 this,
@@ -192,6 +219,10 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * checks whether location is enabled or not
+     * @return
+     */
     private boolean isLocationEnabled() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
@@ -199,6 +230,12 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * reacts to granted permissions with a new request for location
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -209,6 +246,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * sets the app to update in 10 minutes.
+     * this way the data stay updated,
+     * and our servers get updated data about the percentage of users who are outdoors
+     */
     private void setGetLastLocationAgain() {
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
@@ -219,12 +261,18 @@ public class MainActivity extends AppCompatActivity {
         }, 600000);
     }
 
+    /**
+     * go to display screen, when the data has been collected
+     */
     public void goToDisplayWeatherActivity() {
         Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
         displayWeatherActivity.putExtra("isFirstDisplay", isFirstDisplay);
         startActivity(displayWeatherActivity);
     }
 
+    /**
+     * listens for GPS location fixes
+     */
     public class LocationListenerGPS implements LocationListener {
         @Override
         public void onLocationChanged(Location location) {}

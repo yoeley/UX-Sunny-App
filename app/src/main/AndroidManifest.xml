@@ -34,9 +34,6 @@
         <receiver
             android:name=".PickWeatherNotificationScheduler"
             android:exported="false"></receiver>
-        <receiver
-            android:name=".LoadingScheduler"
-            android:exported="false"></receiver>
     </application>
 
 </manifest>

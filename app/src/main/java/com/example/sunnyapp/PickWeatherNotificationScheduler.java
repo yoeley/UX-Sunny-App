@@ -13,9 +13,17 @@ import androidx.core.app.NotificationManagerCompat;
 
 import static android.app.NotificationChannel.DEFAULT_CHANNEL_ID;
 
+/**
+ * schedules notifications for best time for a break
+ */
 public class PickWeatherNotificationScheduler extends BroadcastReceiver
 {
-
+    private final static String NOTIFICATION_TITLE = "Take a break!";
+    private final static String NOTIFICATION_BODY = "Now is the best time for an outdoors break";
+    /**
+     * creates a notification channel
+     * @param context
+     */
     private void createNotificationChannel(Context context) {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -32,6 +40,11 @@ public class PickWeatherNotificationScheduler extends BroadcastReceiver
         }
     }
 
+    /**
+     * pops a notification when the time has come
+     * @param context
+     * @param intent
+     */
     @Override
     public void onReceive(Context context, Intent intent)
     {
@@ -44,8 +57,8 @@ public class PickWeatherNotificationScheduler extends BroadcastReceiver
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, DEFAULT_CHANNEL_ID)
                 .setSmallIcon(R.drawable.notification_icon)
-                .setContentTitle("Take a break!")
-                .setContentText("Now is the best time for an outdoors break")
+                .setContentTitle(NOTIFICATION_TITLE)
+                .setContentText(NOTIFICATION_BODY)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 // Set the intent that will fire when the user taps the notification
                 .setContentIntent(pendingIntent)

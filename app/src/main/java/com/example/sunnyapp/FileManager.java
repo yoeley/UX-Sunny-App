@@ -9,7 +9,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
+/**
+ * handles reads/writes to files
+ */
 public class FileManager {
+    /**
+     * writes data to fileName
+     * @param data
+     * @param fileName
+     * @param context
+     */
     public static void writeToFile(String data, String fileName, Context context) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(fileName, Context.MODE_PRIVATE));
@@ -21,6 +30,12 @@ public class FileManager {
         }
     }
 
+    /**
+     * reads a string from fileName
+     * @param context
+     * @param fileName
+     * @return
+     */
     public static String readFromFile(Context context, String fileName) {
 
         String ret = "";
