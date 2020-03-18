@@ -8,4 +8,5 @@
     <string name="title_activity_first_sign_in">FirstSignInActivity</string>
     <string name="channel_name">pick weather notification channel</string>
     <string name="channel_description">a channel for sending pick weather notifications</string>
+    <string name="loading_text">Make your schedule brighter</string>
 </resources>

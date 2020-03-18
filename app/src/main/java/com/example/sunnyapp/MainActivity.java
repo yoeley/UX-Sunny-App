@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.location.LocationListener;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -18,6 +19,8 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -51,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         locationListenerGPS = new LocationListenerGPS();
         mainActivity = this;
         isFirstDisplay = true;
+
         getLastLocation();
     }
 
@@ -216,9 +220,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void goToDisplayWeatherActivity() {
-        Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
-        displayWeatherActivity.putExtra("isFirstDisplay", isFirstDisplay);
-        startActivity(displayWeatherActivity);
+//        Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
+//        displayWeatherActivity.putExtra("isFirstDisplay", isFirstDisplay);
+//        startActivity(displayWeatherActivity);
     }
 
     public class LocationListenerGPS implements LocationListener {
