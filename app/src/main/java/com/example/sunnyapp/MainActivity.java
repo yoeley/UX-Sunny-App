@@ -220,9 +220,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void goToDisplayWeatherActivity() {
-//        Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
-//        displayWeatherActivity.putExtra("isFirstDisplay", isFirstDisplay);
-//        startActivity(displayWeatherActivity);
+        Intent displayWeatherActivity = new Intent(getBaseContext(), DisplayWeatherActivity.class);
+        displayWeatherActivity.putExtra("isFirstDisplay", isFirstDisplay);
+        startActivity(displayWeatherActivity);
     }
 
     public class LocationListenerGPS implements LocationListener {
