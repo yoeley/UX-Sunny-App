@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * saves the forecast for the next 12 hours
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Forecast implements Serializable {
 
