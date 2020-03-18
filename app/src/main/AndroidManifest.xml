@@ -13,13 +13,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
-        <activity android:name=".DisplayWeatherActivity"></activity>
+        <activity android:name=".ErrorScreenActivity"></activity>
+        <activity android:name=".DisplayWeatherActivity" />
         <activity android:name=".MainActivity">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".future_possible_features.ImageManagerActivity"
@@ -31,14 +32,11 @@
             android:theme="@style/AppTheme.NoActionBar.NoActionBar" />
 
         <receiver
-            android:name="com.example.sunnyapp.PickWeatherNotificationScheduler"
-            android:exported="false">
-        </receiver>
-
+            android:name=".PickWeatherNotificationScheduler"
+            android:exported="false"></receiver>
         <receiver
-            android:name="com.example.sunnyapp.LoadingScheduler"
-            android:exported="false">
-        </receiver>
+            android:name=".LoadingScheduler"
+            android:exported="false"></receiver>
     </application>
 
 </manifest>
