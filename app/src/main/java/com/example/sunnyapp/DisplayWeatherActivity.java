@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -29,6 +30,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,6 +43,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     private LineChart chart;
     protected Typeface tfRegular;
     protected Typeface tfLight;
+    private TextView breakTimeText;
 
     private Boolean isNotificationEnabled;
 
@@ -58,6 +61,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
     protected boolean lightning = false;
 
     private final static long ONE_HOUR = 3600000; // in millis
+    private final static String BREAK_TIME_TEXT_FORMAT = "Take a break at: %s:%s";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -250,6 +254,28 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
     }
 
+    private String hourOfMaxHour(float hourOfMax) {
+        return String.valueOf((int)hourOfMax % 24);
+    }
+
+    private String hourOfMaxMinute(float hourOfMax) {
+        int hourOfMaxMinuteInt = (int) ((hourOfMax % 1) * 60);
+        String hourOfMaxMinute = String.valueOf(hourOfMaxMinuteInt);
+        if (hourOfMaxMinuteInt < 10) {
+            hourOfMaxMinute = "0" + hourOfMaxMinute;
+        }
+        return hourOfMaxMinute;
+    }
+
+    private void setBestBreakTime(ArrayList<Entry> values) {
+        ArrayList<Double> currForecast = forecast.getForeCast();
+        Double maxForecast = Collections.max(currForecast);
+        int indexOfMaxForecast = currForecast.indexOf(maxForecast);
+        float hourOfMax = values.get(indexOfMaxForecast).getX();
+
+        TextView breakTimeText = findViewById(R.id.break_time_text);
+        breakTimeText.setText(String.format(BREAK_TIME_TEXT_FORMAT, hourOfMaxHour(hourOfMax), hourOfMaxMinute(hourOfMax)));
+    }
 
     private ArrayList<Entry> createData() {
 
@@ -272,6 +298,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
             Log.d("x value:", Float.toString(hour));
             values.add(new Entry(startHour + hour, forcast12Hours.get(hour).floatValue())); // add one entry per hour
         }
+        setBestBreakTime(values);
         return values;
     }
 
