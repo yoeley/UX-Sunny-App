@@ -104,6 +104,7 @@ public class WeatherLoader {
     private class getWeatherTask extends AsyncTask<Integer, Integer, Integer> {
 
         private Context context;
+        private Boolean wasTaskSuccessful;
 
         public getWeatherTask(Context context){
             this.context = context;
@@ -290,18 +291,20 @@ public class WeatherLoader {
 //            try {
 //                obtainForecastAndSunrise();
 //            } catch (IOException | JSONException e) {
-//            Intent errorScreen = new Intent(context, ErrorScreenActivity.class);
-//            context.startActivity(errorScreen);
+//                wasTaskSuccessful = false;
 //                e.printStackTrace();
+//                return null;
 //            }
 
             try {
                 obtainForecastAndSunriseExample();
             } catch (JSONException e) {
-                Intent errorScreen = new Intent(context, ErrorScreenActivity.class);
-                context.startActivity(errorScreen);
+                wasTaskSuccessful = false;
                 e.printStackTrace();
+                return null;
             }
+
+            wasTaskSuccessful = true;
             return null;
         }
 
@@ -309,7 +312,12 @@ public class WeatherLoader {
         }
 
         protected void onPostExecute(Integer result) {
-            mainActivity.goToDisplayWeatherActivity();
+            if (wasTaskSuccessful) {
+                mainActivity.goToDisplayWeatherActivity();
+            } else {
+                Intent errorScreen = new Intent(context, ErrorScreenActivity.class);
+                context.startActivity(errorScreen);
+            }
         }
 
         private final String locationKeyExample = "213225";

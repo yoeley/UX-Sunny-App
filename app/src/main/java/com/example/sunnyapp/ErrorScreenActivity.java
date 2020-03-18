@@ -15,26 +15,16 @@ public class ErrorScreenActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_error_screen);
-
-        loadBrokenCloudImage();
-        loadBackgroundLayout();
-    }
-
-
-
-    private void loadBrokenCloudImage() {
-        ImageView brokenCloudImage = findViewById(R.id.error_cloud);
-        brokenCloudImage.setImageResource(R.drawable.broken_cloud);
-        }
-
-    private void loadBackgroundLayout(){
-        Drawable background = ContextCompat.getDrawable(this, R.drawable.midday);
-        View view = this.getWindow().getDecorView();
-        view.setBackground(background);
     }
 
     public void retryRetrievingData(View view){
         Intent mainActivity = new Intent(getBaseContext(), MainActivity.class);
         startActivity(mainActivity);
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        moveTaskToBack(true);
     }
 }
