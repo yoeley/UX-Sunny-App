@@ -7,6 +7,7 @@
     android:gravity="center|center_vertical"
     android:orientation="vertical"
     android:screenOrientation="portrait"
+    android:background="@drawable/error_background"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -15,8 +16,8 @@
 
     <ImageView
         android:id="@+id/error_cloud"
-        android:layout_width="300dp"
-        android:layout_height="150dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:background="@android:color/transparent"
         android:clickable="false"
@@ -25,24 +26,22 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.25"
-        app:srcCompat="@drawable/broken_cloud" />
+        app:layout_constraintVertical_bias="0.4"
+        app:srcCompat="@drawable/ic_error" />
 
 
     <TextView
         android:id="@+id/error_message"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_margin="8dp"
+        android:layout_height="wrap_content"
         android:text="@string/error_message"
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:textSize="22sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.758" />
+        app:layout_constraintTop_toBottomOf="@+id/error_cloud"
+        />
 
     <TextView
         android:id="@+id/retry_message"
@@ -51,26 +50,12 @@
         android:text="@string/retry_message"
         android:textAlignment="center"
         android:textColor="#FFFFFF"
-        android:textSize="22sp"
+        android:textSize="16sp"
         android:onClick="retryRetrievingData"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.976" />
+        app:layout_constraintTop_toBottomOf="@+id/error_message"
+        />
 
-    <ImageButton
-        android:id="@+id/retry_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="36dp"
-        android:background="@android:color/transparent"
-        android:onClick="retryRetrievingData"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
-        app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/restart" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
