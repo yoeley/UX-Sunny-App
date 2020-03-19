@@ -422,22 +422,21 @@ public class WeatherLoader {
          */
         @Override
         protected Integer doInBackground(Integer... callers) {
-//            try {
-//                obtainForecastAndSunrise();
-//            } catch (IOException | JSONException e) {
-//                wasTaskSuccessful = false;
-//                e.printStackTrace();
-//                return null;
-//            }
-
             try {
-                obtainForecastAndSunriseExample();
-            } catch (JSONException e) {
+                obtainForecastAndSunrise();
+            } catch (IOException | JSONException e) {
                 wasTaskSuccessful = false;
                 e.printStackTrace();
                 return null;
             }
 
+//            try {
+//                obtainForecastAndSunriseExample();
+//            } catch (JSONException e) {
+//                wasTaskSuccessful = false;
+//                e.printStackTrace();
+//                return null;
+//            }
 
             wasTaskSuccessful = true;
             return null;

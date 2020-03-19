@@ -116,6 +116,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
      */
     private void extractCurrentWeather(){
         int idIcon = forecast.getWeatherIcon();
+
         if (cloudsIds.contains(idIcon)) { clouds = true; }
         if (rainIds.contains(idIcon)) { rain = true; }
         if (snowIds.contains(idIcon)) { snow = true; }
@@ -158,13 +159,14 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         //assume it's early morning. all other cases are taken care of in switch statement:
         Drawable background = null;
         FrameLayout layout = null;
+
         switch (timeOfDay) {
             case 1:
                 background = ContextCompat.getDrawable(this, R.drawable.sunrise);
                 layout = (FrameLayout)findViewById(R.id.foggy_clouds);
                 break;
             case 2:
-                if (clouds == false) {
+                if (clouds == true) {
                     background = ContextCompat.getDrawable(this, R.drawable.midday);
                     layout = (FrameLayout) findViewById(R.id.day_clouds);
                 }
