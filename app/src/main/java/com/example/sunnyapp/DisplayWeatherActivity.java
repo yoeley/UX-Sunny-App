@@ -253,6 +253,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.setPinchZoom(false);
         chart.setDrawGridBackground(false);
         chart.setHighlightPerDragEnabled(true);
+        chart.setHighlightPerTapEnabled(false);
         chart.setViewPortOffsets(35f, 5f, 35f, 100f);
         chart.getDescription().setEnabled(false);
         chart.setDrawGridBackground(false);
