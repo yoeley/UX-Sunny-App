@@ -254,7 +254,7 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         chart.setDrawGridBackground(false);
         chart.setHighlightPerDragEnabled(true);
         chart.setHighlightPerTapEnabled(false);
-        chart.setViewPortOffsets(35f, 5f, 35f, 100f);
+        chart.setViewPortOffsets(50f, 5f, 35f, 100f);
         chart.getDescription().setEnabled(false);
         chart.setDrawGridBackground(false);
         chart.setMaxHighlightDistance(100);
@@ -277,7 +277,6 @@ public class DisplayWeatherActivity extends AppCompatActivity {
         x.setCenterAxisLabels(false);
         x.setGranularity(0.25f); // one hour
 
-        // TODO: fix it so the first value is not written on the x axis (the first value is the current time, the only time that is not a round hour)
         x.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
